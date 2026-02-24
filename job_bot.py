@@ -9,33 +9,53 @@ import pandas as pd
 
 # --- CONFIGURATION ---
 KEYWORDS = [
-    # --- Core Data Science & ML ---
+    # --- TIER 1: The "Standard" Data & ML Titles ---
     "Data Science Intern Summer 2026",
+    "Data Scientist Intern Summer 2026",
     "Machine Learning Intern Summer 2026",
     "Machine Learning Engineer Intern 2026",
     "Artificial Intelligence Intern 2026",
-    "AI Engineering Intern 2026",
+    "AI Engineer Intern 2026",
     
-    # --- Specialized & Research Roles (High Salary) ---
+    # --- TIER 2: The "Prestige" Tech Titles (Amazon/Microsoft/Nvidia style) ---
+    # These often pay 30-50% more than standard "Data Analyst" roles
     "Applied Scientist Intern 2026",
+    "Applied Machine Learning Intern 2026",
     "Research Scientist Intern 2026",
-    "Quantitative Researcher Intern 2026", 
+    "Research Engineer Intern 2026",
+    "Algorithm Engineer Intern 2026",
+    
+    # --- TIER 3: Fintech & Quant (High Fit for your Amex Background) ---
+    # These roles value your "Incident Data" & "Change Failure" project experience
+    "Quantitative Researcher Intern 2026",
+    "Quantitative Analyst Intern 2026",
+    "Quant Developer Intern 2026",
+    "Financial Engineering Intern 2026",
+    "Decision Science Intern 2026",  # Common in Banks/Insurance
+    "Risk Modeling Intern 2026",
+    
+    # --- TIER 4: Emerging Tech (GenAI / LLMs) ---
+    # Companies hiring specifically for the new wave
     "Generative AI Intern 2026",
+    "LLM Intern 2026",
+    "Large Language Model Intern 2026",
+    "Natural Language Processing Intern 2026",
     "Computer Vision Intern 2026",
-    "NLP Intern 2026",
     "Deep Learning Intern 2026",
     
-    # --- Engineering & Infrastructure (High Stability) ---
-    "MLOps Intern 2026",
-    "Data Engineer Intern Summer 2026",
+    # --- TIER 5: The "Hidden" Engineering Roles ---
+    # Often listed as SWE but are actually 100% ML work
     "Software Engineer Intern Machine Learning",
+    "Software Engineer Intern AI",
     "Software Engineer Intern Data",
+    "Data Engineer Intern Summer 2026",
+    "MLOps Intern 2026",
     "AI Infrastructure Intern 2026",
     
-    # --- Domain Specific (Matches your Resume) ---
-    "Biomedical AI Intern 2026",      # Fits your brain lesion project
-    "Medical Imaging AI Intern 2026", # Fits your U-Net experience
-    "Financial Engineering Intern"    # Fits your Amex experience
+    # --- TIER 6: Domain Specific (Bio/Health for your U-Net project) ---
+    "Biomedical Data Science Intern",
+    "Computational Biology Intern", 
+    "Imaging AI Intern"
 ]
 
 # EXPANDED PRIORITY LIST
@@ -190,39 +210,50 @@ def main():
     print("Loading company lists...")
     master_safe_list = get_master_company_list()
     
-    print("Scraping jobs from 5 sources...")
-    try:
-        jobs = scrape_jobs(
-            # Added zip_recruiter and google (which aggregates many others)
-            site_name=["linkedin", "indeed", "glassdoor", "zip_recruiter", "google"],
-            search_term=" OR ".join(KEYWORDS),
-            location="United States",
-            results_wanted=100,  # Increased to capture more
-            hours_old=24,
-            country_urlpatterns={
-                "Global": "https://www.linkedin.com/jobs/search/?keywords={}&location={}"
-            }
-        )
-        
-        jobs_list = jobs.to_dict('records')
-        
-        # Deduplicate by URL
-        unique_jobs = {j.get('job_url'): j for j in jobs_list if j.get('job_url')}.values()
-        
-        # FILTER: Keep job if it matches our Master Safe List
-        filtered_jobs = [
-            j for j in unique_jobs 
-            if is_high_quality(j.get('company'), master_safe_list)
-        ]
+    all_jobs = []
+    
+    # Split keywords into chunks of 5 to avoid search engine limits
+    chunk_size = 5
+    keyword_chunks = [KEYWORDS[i:i + chunk_size] for i in range(0, len(KEYWORDS), chunk_size)]
+    
+    print(f"Scraping jobs in {len(keyword_chunks)} batches...")
+    
+    for i, batch in enumerate(keyword_chunks):
+        print(f"  - Batch {i+1}/{len(keyword_chunks)}: {batch}")
+        try:
+            # We explicitly search for "Summer 2026" to avoid old roles
+            search_query = " OR ".join(batch)
+            
+            jobs = scrape_jobs(
+                site_name=["linkedin", "indeed", "glassdoor", "zip_recruiter", "google"],
+                search_term=search_query,
+                location="United States",
+                results_wanted=20, # Smaller number per batch adds up to a lot
+                hours_old=24, 
+                country_urlpatterns={
+                    "Global": "https://www.linkedin.com/jobs/search/?keywords={}&location={}"
+                }
+            )
+            
+            # Append results to our master list
+            if not jobs.empty:
+                all_jobs.extend(jobs.to_dict('records'))
+                
+        except Exception as e:
+            print(f"    Error in batch {i+1}: {e}")
+            continue
 
-        if filtered_jobs:
-            send_email(filtered_jobs)
-            print(f"Sent {len(filtered_jobs)} matches.")
-        else:
-            print("No matches found in the master list.")
+    # Deduplicate (since some keywords might find the same job)
+    unique_jobs = {j.get('job_url'): j for j in all_jobs if j.get('job_url')}.values()
+    
+    # Filter for Quality
+    filtered_jobs = [
+        j for j in unique_jobs 
+        if is_high_quality(j.get('company'), master_safe_list)
+    ]
 
-    except Exception as e:
-        print(f"Scraping error: {e}")
-
-if __name__ == "__main__":
-    main()
+    if filtered_jobs:
+        send_email(filtered_jobs)
+        print(f"Sent {len(filtered_jobs)} unique matches.")
+    else:
+        print("No matches found in the master list today.")
