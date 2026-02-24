@@ -27,5 +27,5 @@ jobs:
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          PYTHONUNBUFFERED:
+          PYTHONUNBUFFERED: "1"
         run: python job_bot.py
