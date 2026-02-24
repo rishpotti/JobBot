@@ -207,7 +207,7 @@ def send_email(jobs):
         server.sendmail(sender_email, receiver_email, msg.as_string())
 
 def main():
-    print("Loading company lists...")
+    print("Loading company lists...", flush=True)
     master_safe_list = get_master_company_list()
     
     all_jobs = []
@@ -216,10 +216,10 @@ def main():
     chunk_size = 5
     keyword_chunks = [KEYWORDS[i:i + chunk_size] for i in range(0, len(KEYWORDS), chunk_size)]
     
-    print(f"Scraping jobs in {len(keyword_chunks)} batches...")
+    print(f"Scraping jobs in {len(keyword_chunks)} batches...", flush=True)
     
     for i, batch in enumerate(keyword_chunks):
-        print(f"  - Batch {i+1}/{len(keyword_chunks)}: {batch}")
+        print(f"  - Batch {i+1}/{len(keyword_chunks)}: {batch}", flush=True)
         try:
             # We explicitly search for "Summer 2026" to avoid old roles
             search_query = " OR ".join(batch)
@@ -240,7 +240,7 @@ def main():
                 all_jobs.extend(jobs.to_dict('records'))
                 
         except Exception as e:
-            print(f"    Error in batch {i+1}: {e}")
+            print(f"    Error in batch {i+1}: {e}", flush=True)
             continue
 
     # Deduplicate (since some keywords might find the same job)
@@ -254,6 +254,6 @@ def main():
 
     if filtered_jobs:
         send_email(filtered_jobs)
-        print(f"Sent {len(filtered_jobs)} unique matches.")
+        print(f"Sent {len(filtered_jobs)} unique matches.", flush=True)
     else:
-        print("No matches found in the master list today.")
+        print("No matches found in the master list today.", flush=True)
