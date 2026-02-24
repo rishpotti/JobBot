@@ -9,10 +9,33 @@ import pandas as pd
 
 # --- CONFIGURATION ---
 KEYWORDS = [
+    # --- Core Data Science & ML ---
     "Data Science Intern Summer 2026",
     "Machine Learning Intern Summer 2026",
+    "Machine Learning Engineer Intern 2026",
+    "Artificial Intelligence Intern 2026",
     "AI Engineering Intern 2026",
-    "Software Engineer Intern Machine Learning"
+    
+    # --- Specialized & Research Roles (High Salary) ---
+    "Applied Scientist Intern 2026",
+    "Research Scientist Intern 2026",
+    "Quantitative Researcher Intern 2026", 
+    "Generative AI Intern 2026",
+    "Computer Vision Intern 2026",
+    "NLP Intern 2026",
+    "Deep Learning Intern 2026",
+    
+    # --- Engineering & Infrastructure (High Stability) ---
+    "MLOps Intern 2026",
+    "Data Engineer Intern Summer 2026",
+    "Software Engineer Intern Machine Learning",
+    "Software Engineer Intern Data",
+    "AI Infrastructure Intern 2026",
+    
+    # --- Domain Specific (Matches your Resume) ---
+    "Biomedical AI Intern 2026",      # Fits your brain lesion project
+    "Medical Imaging AI Intern 2026", # Fits your U-Net experience
+    "Financial Engineering Intern"    # Fits your Amex experience
 ]
 
 # EXPANDED PRIORITY LIST
