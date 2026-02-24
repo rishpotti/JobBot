@@ -1,0 +1,501 @@
+rank,company,sector,revenue,locations,locations2,rr,website,employees,dude
+1,Amazon,Internet Services and Retailing,"716,924,000,000",Seattle,Washington,98109,amazon.com,"1,556,000",Andrew Jassy
+2,Walmart,General Merchandisers,"713,200,000,000",Bentonville,Arkansas,72716,walmart.com,"2,100,000",John Furner
+3,UnitedHealth,Health Care: Insurance and Managed Care,"447,600,000,000",Eden Prairie,Minnesota,55344,unitedhealthgroup.com,"400,000",Stephen Hemsley
+4,Apple,"Computers, Office Equipment","416,161,000,000",Cupertino,California,95014,apple.com,"164,000",Timothy Cook
+5,Alphabet,Internet Services and Retailing,"402,836,000,000",Mountain View,California,94043,abc.xyz,"183,323",Sundar Pichai
+6,CVS Health,Health Care: Pharmacy and Other Services,"402,100,000,000",Woonsocket,Rhode Island,2895,cvshealth.com,"259,500",David Joyner
+7,McKesson,Wholesalers: Health Care,"387,090,000,000",Irving,Texas,75039,mckesson.com,"48,000",Brian Tyler
+8,Berkshire Hathaway,Insurance: Property and Casualty (Stock),"377,000,000,000",Omaha,Nebraska,68131,berkshirehathaway.com,"392,400",Greg Abel
+9,Exxon Mobil,Petroleum Refining,"332,238,000,000",Spring,Texas,77389,exxonmobil.com,"60,900",Darren Woods
+10,Cencora,Wholesalers: Health Care,"321,330,000,000",Conshohocken,Pennsylvania,19428,cencora.com,"44,000",Robert Mauch
+11,Microsoft,Computer Software,"293,810,000,000",Redmond,Washington,98052,microsoft.com,"228,000",Satya Nadella
+12,Costco,General Merchandisers,"275,240,000,000",Issaquah,Washington,98027,costco.com,"333,000",Ron Vachris
+13,Cigna,Health Care: Pharmacy and Other Services,"268,080,000,000",Bloomfield,Connecticut,6002,thecignagroup.com,"72,398",David Cordani
+14,Cardinal Health,Wholesalers: Health Care,"234,310,000,000",Dublin,Ohio,43017,cardinalhealth.com,"48,411",Jason Hollar
+15,Elevance Health,Health Care: Insurance and Managed Care,"194,820,000,000",Indianapolis,Indiana,46204,elevancehealth.com,"103,679",Gail Boudreaux
+16,Ford Motor,Motor Vehicles & Parts,"189,590,000,000",Dearborn,Michigan,48126,ford.com,"171,000",James Farley Jr.
+17,Meta,Internet Services and Retailing,"189,460,000,000",Menlo Park,California,94025,meta.com,"74,067",Mark Zuckerberg
+18,Chevron,Petroleum Refining,"188,690,000,000",Houston,Texas,77002,chevron.com,"45,298",Michael Wirth
+19,General Motors,Motor Vehicles & Parts,"187,440,000,000",Detroit,Michigan,48265,gm.com,"162,000",Mary Barra
+20,Nvidia,Semiconductors and Other Electronic Components,"187,140,000,000",Santa Clara,California,95051,nvidia.com,"36,000",Jensen Huang
+21,Centene,Health Care: Insurance and Managed Care,"167,680,000,000",St. Louis,Missouri,63105,centene.com,"60,500",Sarah London
+22,JPMorgan Chase,Commercial Banks,"167,230,000,000",New York,New York,10179,jpmorganchase.com,"317,233",James Dimon
+23,Home Depot,Specialty Retailers: Other,"166,190,000,000",Atlanta,Georgia,30339,homedepot.com,"470,100",Edward Decker
+24,Walgreens,Food & Drug Stores,"154,580,000,000",Deerfield,Illinois,60015,walgreensbootsalliance.com,"252,500",Timothy Wentworth
+25,Fannie Mae,Diversified Financials,"152,670,000,000",Washington,District Of Columbia,20005,fanniemae.com,"8,200",Priscilla Almodovar
+26,Kroger,Food & Drug Stores,"147,230,000,000",Cincinnati,Ohio,45202,thekrogerco.com,"409,000",Ronald Sargent
+27,Verizon,Telecommunications,"137,490,000,000",New York,New York,10036,verizon.com,"99,600",Hans Vestberg
+28,Marathon Petroleum,Petroleum Refining,"133,580,000,000",Findlay,Ohio,45840,marathonpetroleum.com,"18,300",Maryann Mannen
+29,Phillips 66,Petroleum Refining,"131,950,000,000",Houston,Texas,77042,phillips66.com,"13,200",Mark Lashier
+30,StoneX,Diversified Financials,"130,900,000,000",New York,New York,10169,stonex.com,"4,500",Philip Smith
+31,Humana,Health Care: Insurance and Managed Care,"126,360,000,000",Louisville,Kentucky,40202,humana.com,"65,680",James Rechtin
+32,AT&T,Telecommunications,"124,480,000,000",Dallas,Texas,75202,att.com,"140,990",John Stankey
+33,Comcast,Telecommunications,"123,310,000,000",Philadelphia,Pennsylvania,19103,comcast.com,"182,000",Brian Roberts
+34,State Farm,Insurance: Property and Casualty (Mutual),"122,951,000,000",Bloomington,Illinois,61710,statefarm.com,"67,381",Jon Farney
+35,Freddie Mac,Diversified Financials,"122,052,000,000",McLean,Virginia,22102,freddiemac.com,"8,090",Michael Hutchins
+36,Valero Energy,Petroleum Refining,"116,550,000,000",San Antonio,Texas,78249,valero.com,"9,910",Lane Riggs
+37,Target,General Merchandisers,"105,240,000,000",Minneapolis,Minnesota,55403,target.com,"440,000",Brian Cornell
+38,Dell Technologies,"Computers, Office Equipment","104,090,000,000",Round Rock,Texas,78682,delltechnologies.com,"108,000",Michael Dell
+39,Bank of America,Commercial Banks,"101,450,000,000",Charlotte,North Carolina,28255,bankofamerica.com,"213,193",Brian Moynihan
+40,Tesla,Motor Vehicles & Parts,"95,630,000,000",Austin,Texas,78725,tesla.com,"125,665",Elon Musk
+41,Walt Disney,Entertainment,"94,430,000,000",Burbank,California,91521,waldisney.com,"205,040",Robert Iger
+42,PepsiCo,Food Consumer Products,"92,370,000,000",Purchase,New York,10577,pepsico.com,"319,000",Ramon Laguarta
+43,Johnson & Johnson,Pharmaceuticals,"92,150,000,000",New Brunswick,New Jersey,8933,jnj.com,"138,100",Joaquin Duato
+44,UPS,"Mail, Package and Freight Delivery","89,480,000,000",Atlanta,Georgia,30328,ups.com,"372,180",Carol Tomé
+45,FedEx,"Mail, Package and Freight Delivery","88,590,000,000",Memphis,Tennessee,38120,fedex.com,"422,100",Rajesh Subramaniam
+46,RTX,Aerospace & Defense,"85,990,000,000",Arlington,Virginia,22209,rtx.com,"186,000",Christopher Calio
+47,Progressive,Insurance: Property and Casualty (Stock),"85,170,000,000",Mayfield Village,Ohio,44143,progressive.com,"66,308",Susan Patricia Griffith
+48,Procter & Gamble,Household and Personal Products,"84,930,000,000",Cincinnati,Ohio,45202,pginvestor.com,"108,000",Jon Moeller
+49,Lowe's,Specialty Retailers: Other,"84,260,000,000",Mooresville,North Carolina,28117,lowes.com,"215,500",Marvin Ellison
+50,Archer Daniels Midland,Food Production,"83,210,000,000",Chicago,Illinois,60601,adm.com,"43,213",Juan Luciano
+51,Sysco,Wholesalers: Food and Grocery,"82,030,000,000",Houston,Texas,77077,sysco.com,"76,000",Kevin Hourican
+52,Albertsons,Food & Drug Stores,"81,370,000,000",Boise,Idaho,83706,albertsonscompanies.com,"196,650",Susan Morris
+53,Boeing,Aerospace & Defense,"80,760,000,000",Arlington,Virginia,22202,boeing.com,"172,000",Kelly Ortberg
+54,Energy Transfer,Pipelines,"79,760,000,000",Dallas,Texas,75225,energytransfer.com,"16,248",Thomas Long
+55,Wells Fargo,Commercial Banks,"79,070,000,000",San Francisco,California,94104,wellsfargo.com,"217,502",Charles Scharf
+56,Citi,Commercial Banks,"75,380,000,000",New York,New York,10013,citigroup.com,"227,855",Jane Fraser
+57,HCA Healthcare,Health Care: Medical Facilities,"74,370,000,000",Nashville,Tennessee,37203,hcahealthcare.com,"271,000",Samuel Hazen
+58,Lockheed Martin,Aerospace & Defense,"73,350,000,000",Bethesda,Maryland,20817,lockheedmartin.com,"121,000",James Taiclet
+59,MetLife,"Insurance: Life, Health (Stock)","71,930,000,000",New York,New York,10166,metlife.com,"45,000",Michel Khalaf
+60,Morgan Stanley,Commercial Banks,"68,530,000,000",New York,New York,10036,morganstanley.com,"80,478",Edward Pick
+61,Allstate,Insurance: Property and Casualty (Stock),"66,850,000,000",Northbrook,Illinois,60062,allstate.com,"55,200",Thomas Wilson
+62,IBM,Information Technology Services,"65,400,000,000",Armonk,New York,10504,ibm.com,"284,500",Arvind Krishna
+63,American Express,Diversified Financials,"65,290,000,000",New York,New York,10285,americanexpress.com,"75,100",Stephen Squeri
+64,Caterpillar,Construction and Farm Machinery,"64,670,000,000",Irving,Texas,75039,caterpillar.com,"112,900",Jospeh Creed
+65,Merck,Pharmaceuticals,"64,240,000,000",Rahway,New Jersey,7065,merck.com,"74,000",Robert Davis
+66,Delta Airlines,Airlines,"62,920,000,000",Atlanta,Georgia,30354,delta.com,"103,000",Edward Bastian
+67,Pfizer,Pharmaceuticals,"62,790,000,000",New York,New York,10001,pfizer.com,"81,000",Albert Bourla
+68,New York Life Insurance,"Insurance: Life, Health (Mutual)","62,639,000,000",New York,New York,10010,newyorklife.com,"15,131",Craig DeSanto
+69,Performance Food,Wholesalers: Food and Grocery,"61,560,000,000",Richmond,Virginia,23238,pfgc.com,"36,815",George Holm
+70,ConocoPhillips,"Mining, Crude-Oil Production","61,280,000,000",Houston,Texas,77079,conocophillips.com,"11,800",Ryan Lance
+71,Oracle,Computer Software,"61,020,000,000",Austin,Texas,78741,oracle.com,"159,000",Safra Catz
+72,TD Synnex,Wholesalers: Electronics and Office Equipment,"60,970,000,000",Fremont,California,94538,tdsynnex.com,"25,750",Patrick Zammit
+73,Publix Super Markets,Food & Drug Stores,"60,177,000,000",Lakeland,Florida,33811,publix.com,"255,000",Kevin Murphy
+74,Broadcom,Semiconductors and Other Electronic Components,"59,930,000,000",Palo Alto,California,94304,broadcom.com,"37,000",Hock Tan
+75,AbbVie,Pharmaceuticals,"59,640,000,000",North Chicago,Illinois,60064,abbvie.com,"55,000",Robert Michael
+76,Eli Lilly,Pharmaceuticals,"59,420,000,000",Indianapolis,Indiana,46285,lilly.com,"47,000",David Ricks
+77,TJX,Specialty Retailers: Apparel,"58,980,000,000",Framingham,Massachusetts,1701,tjx.com,"364,000",Ernie Herrman
+78,Nationwide,Insurance: Property and Casualty (Mutual),"58,646,000,000",Columbus,Ohio,43215,nationwide.com,"22,453",Kirt Walker
+79,United Airlines,Airlines,"58,370,000,000",Chicago,Illinois,60606,united.com,"107,300",Scott Kirby
+80,Cisco Systems,Network and Other Communications Equipment,"57,700,000,000",San Jose,California,95134,cisco.com,"90,400",Charles Robbins
+81,Prudential Financial,"Insurance: Life, Health (Stock)","57,600,000,000",Newark,New Jersey,7102,prudential.com,"37,936",Andrew Sullivan
+82,Goldman Sachs,Commercial Banks,"57,340,000,000",New York,New York,10282,goldmansachs.com,"46,500",David Solomon
+83,HP,"Computers, Office Equipment","55,300,000,000",Palo Alto,California,94304,hp.com,"58,000",Enrique Lores
+84,Charter Communications,Telecommunications,"55,100,000,000",Stamford,Connecticut,6902,charter.com,"94,500",Christopher Winfrey
+85,Tyson Foods,Food Production,"54,440,000,000",Springdale,Arkansas,72762,tysonfoods.com,"138,000",Donnie King
+86,American Airlines,Airlines,"54,290,000,000",Fort Worth,Texas,76155,aa.com,"133,300",Robert Isom
+87,Intel,Semiconductors and Other Electronic Components,"53,440,000,000",Santa Clara,California,95054,intel.com,"108,900",Lip-Bu Tan
+88,Enterprise Products Partners,Pipelines,"53,000,000,000",Houston,Texas,77002,enterpriseproducts.com,"7,800",James Teague
+89,General Dynamics,Aerospace & Defense,"51,510,000,000",Reston,Virginia,20190,gd.com,"117,000",Phebe Novakovic
+90,Ingram Micro,Wholesalers: Electronics and Office Equipment,"51,020,000,000",Irvine,California,92612,ingrammicro.com,"26,125",Paul Bay
+91,Liberty Mutual Insurance,Insurance: Property and Casualty (Stock),"50,429,000,000",Boston,Massachusetts,2116,libertymutual.com,"40,000",Timothy Sweeney
+92,Uber,Internet Services and Retailing,"49,610,000,000",San Francisco,California,94158,uber.com,"31,100",Dara Khosrowshahi
+93,USAA,Insurance: Property and Casualty (Stock),"48,560,000,000",San Antonio,Texas,78288,usaa.com,"38,018",Juan Andrade
+94,Travelers,Insurance: Property and Casualty (Stock),"48,400,000,000",New York,New York,10017,travelers.com,"34,000",Alan Schnitzer
+95,Bristol-Myers Squibb,Pharmaceuticals,"48,030,000,000",Princeton,New Jersey,8543,bms.com,"34,100",Christopher Boerner
+96,Coca-Cola,Beverages,"47,660,000,000",Atlanta,Georgia,30313,coca-colacompany.com,"69,700",Henrique Braun
+97,TIAA,"Insurance: Life, Health (Mutual)","46,946,000,000",New York,New York,10017,tiaa.org,"15,623",Thasunda Brown Duckett
+98,Plains GP,Pipelines,"46,920,000,000",Houston,Texas,77002,plains.com,"4,200",Wilfred Chiang
+99,Nike,Apparel,"46,440,000,000",Beaverton,Oregon,97005,nike.com,"79,400",Elliott Hill
+100,Deere,Construction and Farm Machinery,"45,680,000,000",Moline,Illinois,61265,deere.com,"55,524",John May
+101,Qualcomm,Semiconductors and Other Electronic Components,"44,280,000,000",San Diego,California,92121,qualcomm.com,"49,000",Cristiano Amon
+102,General Electric,Aerospace & Defense,"43,950,000,000",Evendale,Ohio,45215,ge.com,"53,000",Lawrence Culp Jr.
+103,Abbott Laboratories,Medical Products and Equipment,"43,840,000,000",Abbott Park,Illinois,60064,abbott.com,"114,000",Robert Ford
+104,Thermo Fisher Scientific,"Scientific, Photographic and Control Equipment","43,740,000,000",Waltham,Massachusetts,2451,thermofisher.com,"125,000",Marc Casper
+105,Netflix,Entertainment,"43,380,000,000",Los Gatos,California,95032,netflix.com,"14,000",Ted Sarandos & Greg Peters
+106,Mass Mutual,"Insurance: Life, Health (Mutual)","43,072,000,000",Springfield,Massachusetts,1111,massmutual.com,"11,192",Roger Crandall
+107,Molina Healthcare,Health Care: Insurance and Managed Care,"42,840,000,000",Long Beach,California,90802,molinahealthcare.com,"18,000",Joseph Zubretsky
+108,Dollar General,Specialty Retailers: Other,"42,120,000,000",Goodlettsville,Tennessee,37072,dollargeneral.com,"194,200",Todd Vasos
+109,Best Buy,Specialty Retailers: Other,"41,830,000,000",Richfield,Minnesota,55423,bestbuy.com,"85,000",Corie Barry
+110,Northwestern Mutual,"Insurance: Life, Health (Mutual)","41,445,000,000",Milwaukee,Wisconsin,53202,northwesternmutual.com,"8,249",Timothy Gerend
+111,Northrop Grumman,Aerospace & Defense,"40,930,000,000",Falls Church,Virginia,22042,northropgrumman.com,"97,000",Kathy Warden
+112,Dow,Chemicals,"40,910,000,000",Midland,Michigan,48674,dow.com,"36,000",James Fitterling
+113,Honeywell,Industrial Machinery,"40,670,000,000",Charlotte,North Carolina,28202,honeywell.com,"102,000",Vimal Kapur
+114,Salesforce,Computer Software,"40,320,000,000",San Francisco,California,94105,salesforce.com,"76,453",Marc Benioff
+115,Visa,Financial Data Services,"40,000,000,000",San Francisco,California,94105,visa.com,"31,600",Ryan McInerney
+116,Philip Morris,Tobacco,"39,990,000,000",Stamford,Connecticut,6901,pmi.com,"83,100",Jacek Olczak
+117,CBRE,Real Estate,"39,330,000,000",Dallas,Texas,75201,cbre.com,"140,000",Robert Sulentic
+118,CHS,Food Production,"39,261,000,000",Inver Grove Heights,Minnesota,55077,chsinc.com,"10,730",Jay Debertin
+119,US Foods,Wholesalers: Food and Grocery,"39,120,000,000",Rosemont,Illinois,60018,usfoods.com,"30,000",David Flitman
+120,Warner Bros. Discovery,Entertainment,"37,860,000,000",New York,New York,10003,wbd.com,"35,000",David Zaslav
+121,GE Vernova,Energy,"37,670,000,000",Cambridge,Massachusetts,2141,gevernova.com,"76,800",Scott Strazik
+122,World Kinect,Energy,"37,650,000,000",Miami,Florida,33178,world-kinect.com,"4,745",Michael Kasbar
+123,Mondelez,Food Consumer Products,"37,650,000,000",Chicago,Illinois,60607,mondelezinternational.com,"90,000",Dirk Van de Put
+124,Lithia Motors,"Automotive Retailing, Services","37,610,000,000",Medford,Oregon,97501,lithiadriveway.com,"30,164",Bryan DeBoer
+125,Micron Technology,Semiconductors and Other Electronic Components,"37,380,000,000",Boise,Idaho,83716,micron.com,"48,000",Sanjay Mehrotra
+126,Starbucks,Food Services,"37,180,000,000",Seattle,Washington,98134,starbucks.com,"361,000",Brian Niccol
+127,Amgen,Pharmaceuticals,"35,970,000,000",Thousand Oaks,California,91320,amgen.com,"28,000",Robert Bradway
+128,Lennar,Homebuilders,"34,770,000,000",Miami,Florida,33126,lennar.com,"13,265",Jonathan Jaffe
+129,Hewlett Packard,"Computers, Office Equipment","34,300,000,000",Spring,Texas,77389,hpe.com,"61,000",Antonio Neri
+130,D.R. Horton,Homebuilders,"34,250,000,000",Arlington,Texas,76011,drhorton.com,"14,766",Paul Romanowski
+131,Coupang,Internet Services and Retailing,"33,660,000,000",Seattle,Washington,98101,aboutcoupang.com,"95,000",Bom Kim
+132,Cummins,Industrial Machinery,"33,580,000,000",Columbus,Indiana,47201,cummins.com,"69,600",Jennifer Rumsey
+133,GuideWell Mutual,"Insurance: Life, Health (Stock)","32,955,000,000",Jacksonville,Florida,32246,guidewell.com,"17,936",Patrick Geraghty
+134,PayPal,Financial Data Services,"32,860,000,000",San Jose,California,95131,paypal.com,"24,400",Alex Chriss
+135,Advanced Micro Devices,Semiconductors and Other Electronic Components,"32,030,000,000",Santa Clara,California,95054,amd.com,"28,000",Lisa Su
+136,Nucor,Metals,"31,880,000,000",Charlotte,North Carolina,28211,nucor.com,"32,700",Leon Topalian
+137,United Natural Foods,Wholesalers: Food and Grocery,"31,750,000,000",Providence,Rhode Island,2908,unfi.com,"28,333",Sandy Douglas
+138,Oneok,Pipelines,"31,560,000,000",Tulsa,Oklahoma,74103,oneok.com,"5,177",Pierce Norton II
+139,Mastercard,Financial Data Services,"31,470,000,000",Purchase,New York,10577,mastercard.com,"35,300",Michael Miebach
+140,Duke Energy,Utilities: Gas and Electric,"31,240,000,000",Charlotte,North Carolina,28202,duke-energy.com,"26,413",Harry Sideris
+141,Ferguson,Wholesalers: Diversified,"31,160,000,000",Newport News,Virginia,23606,ferguson.com,"35,000",Kevin Murphy
+142,Penske Automotive,"Automotive Retailing, Services","30,680,000,000",Bloomfield Hills,Michigan,48302,penskeautomotive.com,"28,938",Roger Penske
+143,Jabil,Semiconductors and Other Electronic Components,"29,800,000,000",St. Petersburg,Florida,33716,jabil.com,"138,000",Michael Dastoor
+144,NRG Energy,Energy,"29,780,000,000",Houston,Texas,77002,nrg.com,"15,637",Lawrence Coben
+145,PBF Energy,Petroleum Refining,"29,540,000,000",Parsippany,New Jersey,7054,pbfenergy.com,"3,855",Matthew Lucey
+146,Paccar,Motor Vehicles & Parts,"29,530,000,000",Bellevue,Washington,98004,paccar.com,"30,100",Preston Feight
+147,Arrow Electronics,Wholesalers: Electronics and Office Equipment,"29,390,000,000",Centennial,Colorado,80112,arrow.com,"21,520",Sean Kerins
+148,Gilead Sciences,Pharmaceuticals,"29,090,000,000",Foster City,California,94404,gilead.com,"17,600",Daniel O'Day
+149,Southern,Utilities: Gas and Electric,"28,910,000,000",Atlanta,Georgia,30308,southerncompany.com,"28,457",Christopher Womack
+150,Capital One,Commercial Banks,"28,890,000,000",McLean,Virginia,22102,capitalone.com,"52,600",Richard Fairbank
+151,Paramount,Entertainment,"28,730,000,000",New York,New York,10036,paramount.com,"20,350",David Ellison
+152,Applied Materials,Semiconductors and Other Electronic Components,"28,370,000,000",Santa Clara,California,95054,appliedmaterials.com,"35,700",Gary Dickerson
+153,CarMax,"Automotive Retailing, Services","28,280,000,000",Richmond,Virginia,23238,carmax.com,"29,836",William Nash
+154,AutoNation,"Automotive Retailing, Services","27,920,000,000",Fort Lauderdale,Florida,33301,autonation.com,"25,100",Michael Manley
+155,Hartford Insurance,Insurance: Property and Casualty (Stock),"27,920,000,000",Hartford,Connecticut,6155,thehartford.com,"19,100",Christopher Swift
+156,Baker Hughes,"Oil and Gas Equipment, Services","27,710,000,000",Houston,Texas,77079,bakerhughes.com,"57,000",Lorenzo Simonelli
+157,Southwest Airlines,Airlines,"27,550,000,000",Dallas,Texas,75235,southwest.com,"72,450",Robert Jordan
+158,Apollo Global Management,Securities,"27,220,000,000",New York,New York,10019,apollo.com,"5,108",Marc Rowan
+159,Quanta Services,Engineering & Construction,"27,190,000,000",Houston,Texas,77008,quantaservices.com,"58,400",Earl Austin Jr.
+160,American International,Insurance: Property and Casualty (Stock),"27,120,000,000",New York,New York,10020,aig.com,"22,200",Peter Zaffino
+161,HF Sinclair,Petroleum Refining,"26,910,000,000",Dallas,Texas,75219,hfsinclair.com,"5,297",Tim Go
+162,Occidental Petroleum,"Mining, Crude-Oil Production","26,600,000,000",Houston,Texas,77046,oxy.com,"13,323",Vicki Hollub
+163,Marsh & McLennan,Diversified Financials,"26,450,000,000",New York,New York,10036,marshmclennan.com,"90,000",John Doyle
+164,NextEra Energy,Utilities: Gas and Electric,"26,300,000,000",Juno Beach,Florida,33408,nexteraenergy.com,"16,800",John Ketchum
+165,McDonald's,Food Services,"26,260,000,000",Chicago,Illinois,60607,mcdonalds.com,"150,000",Christopher Kempczinski
+166,Booking.com,Internet Services and Retailing,"26,040,000,000",Norwalk,Connecticut,6854,bookingholdings.com,"24,179",Glenn Fogel
+167,U.S. Bancorp,Commercial Banks,"26,010,000,000",Minneapolis,Minnesota,55402,usbank.com,"70,263",Gunjan Kedia
+168,Freeport-McMoRan,"Mining, Crude-Oil Production","26,000,000,000",Phoenix,Arizona,85004,fcx.com,"28,500",Kathleen Quirk
+169,Jones Lang LaSalle,Real Estate,"25,320,000,000",Chicago,Illinois,60601,jll.com,"112,100",Christian Ulbrich
+170,Kraft Heinz,Food Consumer Products,"25,160,000,000",Chicago,Illinois,60601,kraftheinzcompany.com,"36,000",Carlos Abrams-Rivera
+171,Marriott International,"Hotels, Casinos, Resorts","25,100,000,000",Bethesda,Maryland,20814,marriott.com,"155,000",Anthony Capuano
+172,Constellation Energy,Energy,"24,840,000,000",Baltimore,Maryland,21231,constellationenergy.com,"14,240",Joseph Dominguez
+173,3M,Chemicals,"24,830,000,000",St. Paul,Minnesota,55144,3m.com,"61,500",William Brown
+174,Waste Management,Waste Management,"24,780,000,000",Houston,Texas,77002,wm.com,"61,700",James Fish Jr.
+175,PG&E,Utilities: Gas and Electric,"24,760,000,000",Oakland,California,94612,pgecorp.com,"28,410",Patricia Poppe
+176,Live Nation Entertainment,Entertainment,"24,570,000,000",Beverly Hills,California,90210,livenationentertainment.com,"24,200",Michael Rapino
+177,Union Pacific,Railroads,"24,550,000,000",Omaha,Nebraska,68179,up.com,"32,439",Jim Vena
+178,Stryker,Medical Products and Equipment,"24,380,000,000",Portage,Michigan,49002,stryker.com,"53,000",Kevin Lobo
+179,International Paper,"Packaging, Containers","24,330,000,000",Memphis,Tennessee,38197,internationalpaper.com,"37,000",Andrew Silvernail
+180,Exelon,Utilities: Gas and Electric,"24,320,000,000",Chicago,Illinois,60603,exeloncorp.com,"20,014",Calvin Butler Jr.
+181,Danaher,Medical Products and Equipment,"24,270,000,000",Washington,District Of Columbia,20037,danaher.com,"62,000",Rainer Blair
+182,Genuine Parts,Wholesalers: Diversified,"24,060,000,000",Atlanta,Georgia,30339,genpt.com,"63,000",William Stengel II
+183,Block,Financial Data Services,"23,970,000,000",Oakland,California,94612,block.xyz,"11,372",Jack Dorsey
+184,Adobe,Computer Software,"23,770,000,000",San Jose,California,95110,adobe.com,"30,709",Shantanu Narayen
+185,Sherwin-Williams,Chemicals,"23,280,000,000",Cleveland,Ohio,44115,sherwin-williams.com,"63,890",Heidi Petz
+186,Lear,Motor Vehicles & Parts,"22,990,000,000",Southfield,Michigan,48033,lear.com,"173,700",Raymond Scott
+187,WESCO International,Wholesalers: Diversified,"22,940,000,000",Pittsburgh,Pennsylvania,15219,wesco.com,"20,000",John Engel
+188,Charles Schwab,Securities,"22,910,000,000",Westlake,Texas,76262,aboutschwab.com,"32,100",Richard Wurster
+189,BlackRock,Securities,"22,890,000,000",New York,New York,10001,blackrock.com,"21,100",Laurence Fink
+190,Macy's,General Merchandisers,"22,710,000,000",New York,New York,10001,macysinc.com,"94,189",Tony Spring
+191,EOG Resources,"Mining, Crude-Oil Production","22,650,000,000",Houston,Texas,77002,eogresources.com,"3,150",Ezra Yacob
+192,1 Automotive,"Automotive Retailing, Services","22,540,000,000",Houston,Texas,77024,group1auto.com,"20,413",Daryl Kenningham
+193,Avnet,Wholesalers: Electronics and Office Equipment,"22,500,000,000",Phoenix,Arizona,85034,avnet.com,"15,462",Philip Gallagher
+194,Reinsurance of America,"Insurance: Life, Health (Stock)","22,300,000,000",Chesterfield,Missouri,63017,rgare.com,"4,100",Tony Cheng
+195,KKR,Securities,"22,250,000,000",New York,New York,10001,kkr.com,"4,834",Joseph Bae
+196,Halliburton,"Oil and Gas Equipment, Services","22,140,000,000",Houston,Texas,77032,halliburton.com,"48,000",Jeffrey Miller
+197,CDW,Information Technology Services,"22,100,000,000",Vernon Hills,Illinois,60061,cdw.com,"15,100",Christine Leahy
+198,Carrier Global,Industrial Machinery,"22,060,000,000",Palm Beach Gardens,Florida,33418,carrier.com,"48,000",David Gitlin
+199,Ross Stores,Specialty Retailers: Apparel,"22,030,000,000",Dublin,California,94568,rossstores.com,"107,000",James Conroy
+200,Becton Dickinson,Medical Products and Equipment,"21,840,000,000",Franklin Lakes,New Jersey,7417,bd.com,"74,000",Thomas Polen
+201,PNC,Commercial Banks,"21,800,000,000",Pittsburgh,Pennsylvania,15222,pnc.com,"54,435",William Demchak
+202,L3Harris Technologies,Aerospace & Defense,"21,740,000,000",Melbourne,Florida,32919,l3harris.com,"47,000",Christopher Kubasik
+203,Newmont,"Mining, Crude-Oil Production","21,500,000,000",Denver,Colorado,80237,newmont.com,"22,200",Thomas Palmer
+204,American Family Insurance,Insurance: Property and Casualty (Stock),"21,339,000,000",Madison,Wisconsin,53783,amfam.com,"11,073",William Westrate
+205,American Electric Power,Utilities: Gas and Electric,"21,260,000,000",Columbus,Ohio,43215,aep.com,"16,330",William Fehrman
+206,BJ's Wholesale Club,General Merchandisers,"21,160,000,000",Marlborough,Massachusetts,1752,bjs.com,"33,000",Robert Eddy
+207,Fiserv,Financial Data Services,"21,160,000,000",Milwaukee,Wisconsin,53203,fiserv.com,"38,000",Michael Lyons
+208,Super Micro Computer,"Computers, Office Equipment","21,050,000,000",San Jose,California,95131,supermicro.com,"5,684",Charles Liang
+209,Amphenol,Network and Other Communications Equipment,"20,970,000,000",Wallingford,Connecticut,6492,amphenol.com,"125,000",Adam Norwitt
+210,Automatic Data Processing,Diversified Outsourcing Services,"20,900,000,000",Roseland,New Jersey,7068,adp.com,"64,000",Maria Black
+211,Cognizant Technology,Information Technology Services,"20,860,000,000",Teaneck,New Jersey,7666,cognizant.com,"336,800",Ravi Kumar S
+212,Tenet Healthcare,Health Care: Medical Facilities,"20,850,000,000",Dallas,Texas,75254,tenethealth.com,"86,240",Saumya Sutaria
+213,GE HealthCare Technologies,Medical Products and Equipment,"20,250,000,000",Chicago,Illinois,60661,gehealthcare.com,"53,000",Peter Arduini
+214,Altria,Tobacco,"20,170,000,000",Richmond,Virginia,23230,altria.com,"6,200",Salvatore Mancuso
+215,Colgate-Palmolive,Household and Personal Products,"20,100,000,000",New York,New York,10022,colgatepalmolive.com,"34,000",Noel Wallace
+216,Parker-Hannifin,Industrial Machinery,"20,030,000,000",Cleveland,Ohio,44124,parker.com,"61,120",Jennifer Parmentier
+217,Bank of New York,Commercial Banks,"19,730,000,000",New York,New York,10286,bny.com,"51,800",Robin Vince
+218,Kimberly-Clark,Household and Personal Products,"19,720,000,000",Irving,Texas,75038,kimberly-clark.com,"38,000",Michael Hsu
+219,Lam Research,Semiconductors and Other Electronic Components,"19,590,000,000",Fremont,California,94538,lamresearch.com,"17,450",Timothy Archer
+220,Intuit,Computer Software,"19,430,000,000",Mountain View,California,94043,intuit.com,"24,200",Sasan Goodarzi
+221,Boston Scientific,Medical Products and Equipment,"19,350,000,000",Marlborough,Massachusetts,1752,bostonscientific.com,"53,000",Michael Mahoney
+222,AutoZone,Specialty Retailers: Other,"19,290,000,000",Memphis,Tennessee,38103,autozone.com,"100,800",Philip Daniele III
+223,General Mills,Food Consumer Products,"19,160,000,000",Minneapolis,Minnesota,55426,generalmills.com,"34,000",Jeffrey Harmening
+224,Dollar Tree,Specialty Retailers: Other,"18,960,000,000",Chesapeake,Virginia,23320,dollartree.com,"139,572","Michael Creedon, Jr."
+225,Cheniere Energy,Pipelines,"18,940,000,000",Houston,Texas,77002,cheniere.com,"1,714",Jack Fusco
+226,Cleveland-Cliffs,Metals,"18,620,000,000",Cleveland,Ohio,44114,clevelandcliffs.com,"30,000",Lourenco Goncalves
+227,Ameriprise Financial,Diversified Financials,"18,510,000,000",Minneapolis,Minnesota,55474,ameriprise.com,"13,600",James Cracchiolo
+228,Aramark,Diversified Outsourcing Services,"18,510,000,000",Philadelphia,Pennsylvania,19103,aramark.com,"266,680",John Zillmer
+229,Lincoln National,"Insurance: Life, Health (Stock)","18,430,000,000",Radnor,Pennsylvania,19087,lincolnfinancial.com,"9,783",Ellen Cooper
+230,Corebridge Financial,Diversified Financials,"18,340,000,000",Houston,Texas,77019,corebridgefinancial.com,"5,200",Kevin Hogan
+231,Goodyear Tire & Rubber,Motor Vehicles & Parts,"18,310,000,000",Akron,Ohio,44316,goodyear.com,"68,000",Mark Stewart
+232,Truist Financial,Commercial Banks,"18,280,000,000",Charlotte,North Carolina,28202,truist.com,"37,552",William Rogers Jr.
+233,Loews,Insurance: Property and Casualty (Stock),"18,270,000,000",New York,New York,10019,loews.com,"13,000",Benjamin Tisch
+234,Carvana,"Automotive Retailing, Services","18,270,000,000",Tempe,Arizona,85281,carvana.com,"17,400",Ernest Garcia III
+235,Global Partners,Energy,"18,100,000,000",Waltham,Massachusetts,2453,globalp.com,"3,833",Eric Slifka
+236,Edison International,Utilities: Gas and Electric,"18,090,000,000",Rosemead,California,91770,edisoninvestor.com,"14,013",Pedro Pizarro
+237,Emerson Electric,Industrial Machinery,"18,020,000,000",St. Louis,Missouri,63136,emerson.com,"73,000",Karsanbhai
+238,Asbury Automotive,"Automotive Retailing, Services","17,830,000,000",Duluth,Georgia,30097,asburyauto.com,"15,000",David Hult
+239,W.W. Grainger,Wholesalers: Diversified,"17,750,000,000",Lake Forest,Illinois,60045,grainger.com,"25,000",Macpherson
+240,Aflac,"Insurance: Life, Health (Stock)","17,700,000,000",Columbus,Georgia,31999,aflac.com,"12,694",Daniel Amos
+241,Manpower,Diversified Outsourcing Services,"17,640,000,000",Milwaukee,Wisconsin,53212,manpowergroup.com,"26,700",Jonas Prising
+242,Steel Dynamics,Metals,"17,630,000,000",Fort Wayne,Indiana,46804,steeldynamics.com,"13,000",Mark Millett
+243,Pulte,Homebuilders,"17,620,000,000",Atlanta,Georgia,30326,pultegroupinc.com,"6,793",Ryan Marshall
+244,Discover Financial,Diversified Financials,"17,500,000,000",Riverwoods,Illinois,60015,discover.com,"21,000",Michael Shepherd
+245,Corteva,Food Production,"17,470,000,000",Indianapolis,Indiana,46268,corteva.com,"22,000",Charles Magro
+246,O'Reilly Automotive,Specialty Retailers: Other,"17,460,000,000",Springfield,Missouri,65802,oreillyauto.com,"85,579",Brad Beckham
+247,Targa Resources,Pipelines,"17,380,000,000",Houston,Texas,77002,targaresources.com,"3,370",Matthew Meloy
+248,Leidos,Information Technology Services,"17,330,000,000",Reston,Virginia,20190,leidos.com,"48,000",Thomas Bell
+249,MGM Resorts International,"Hotels, Casinos, Resorts","17,280,000,000",Las Vegas,Nevada,89109,mgmresorts.com,"69,000",William Hornbuckle
+250,Texas Instruments,Semiconductors and Other Electronic Components,"17,270,000,000",Dallas,Texas,75243,ti.com,"34,000",Haviv Ilan
+251,Vistra,Energy,"17,190,000,000",Irving,Texas,75039,vistracorp.com,"6,850",James Burke
+252,Murphy USA,Specialty Retailers: Other,"17,010,000,000",El Dorado,Arkansas,71730,murphyusa.com,"11,550",Andrew Clyde
+253,Universal Health Services,Health Care: Medical Facilities,"16,990,000,000",King of Prussia,Pennsylvania,19406,uhs.com,"87,500",Marc Miller
+254,Casey's General Stores,Specialty Retailers: Other,"16,970,000,000",Ankeny,Iowa,50021,caseys.com,"33,147",Darren Rebelez
+255,Peter Kiewit Sons',Engineering & Construction,"16,838,000,000",Omaha,Nebraska,68102,kiewit.com,"31,800",Rick Lanoha
+256,Consolidated Edison,Utilities: Gas and Electric,"16,590,000,000",New York,New York,10003,conedison.com,"15,097",Timothy Cawley
+257,Devon Energy,"Mining, Crude-Oil Production","16,550,000,000",Oklahoma City,Oklahoma,73102,devonenergy.com,"2,300",Clay Gaspar
+258,C.H. Robinson Worldwide,Transportation and Logistics,"16,500,000,000",Eden Prairie,Minnesota,55347,chrobinson.com,"13,781",David Bozeman
+259,Republic Services,Waste Management,"16,500,000,000",Phoenix,Arizona,85054,republicservices.com,"42,000",Jon Vander Ark
+260,Guardian Life,"Insurance: Life, Health (Mutual)","16,471,000,000",New York,New York,10001,guardianlife.com,"7,472",Andrew McMahon
+261,Fox,Entertainment,"16,470,000,000",New York,New York,10036,foxcorporation.com,"10,200",Lachlan Murdoch
+262,Kinder Morgan,Pipelines,"16,420,000,000",Houston,Texas,77002,kindermorgan.com,"10,933",Kimberly Dang
+263,Edward Jones,Securities,"16,257,000,000",Des Peres,Missouri,63131,edwardjones.com,"55,000",Penny Pennington
+264,EMCOR,Engineering & Construction,"16,240,000,000",Norwalk,Connecticut,6851,emcorgroup.com,"40,400",Anthony Guzzi
+265,Markel,Insurance: Property and Casualty (Stock),"16,210,000,000",Glen Allen,Virginia,23060,mklgroup.com,"22,000",Thomas Gayner
+266,Land O'Lakes,Food Consumer Products,"16,207,000,000",Arden Hills,Minnesota,55126,landolakesinc.com,"9,000",Beth Ford
+267,Keurig Dr Pepper,Beverages,"16,170,000,000",Burlington,Massachusetts,1803,keurigdrpepper.com,"29,400",Timothy Cofer
+268,AECOM,Engineering & Construction,"16,140,000,000",Dallas,Texas,75240,aecom.com,"51,000",Troy Rudd
+269,Omnicom,"Advertising, Marketing","16,070,000,000",New York,New York,10017,omnicomgroup.com,"74,900",John Wren
+270,United Rentals,Specialty Retailers: Other,"15,990,000,000",Stamford,Connecticut,6902,unitedrentals.com,"27,900",Matthew Flannery
+271,IQVIA,Health Care: Pharmacy and Other Services,"15,900,000,000",Durham,North Carolina,27703,iqvia.com,"88,000",Ari Bousbib
+272,Ecolab,Chemicals,"15,890,000,000",St. Paul,Minnesota,55102,ecolab.com,"48,000",Christophe Beck
+273,Illinois Tool Works,Industrial Machinery,"15,880,000,000",Glenview,Illinois,60025,itw.com,"44,000",Christopher O'Herlihy
+274,Auto-Owners Insurance,Insurance: Property and Casualty (Mutual),"15,839,000,000",Lansing,Michigan,48917,auto-owners.com,"7,329",Jamie Whisnant
+275,Pacific Life,"Insurance: Life, Health (Stock)","15,827,000,000",Newport Beach,California,92660,pacificlife.com,"4,334",Darryl Button
+276,Dominion Energy,Utilities: Gas and Electric,"15,810,000,000",Richmond,Virginia,23219,dominionenergy.com,"14,700",Robert Blue
+277,Principal Financial,"Insurance: Life, Health (Stock)","15,800,000,000",Des Moines,Iowa,50392,principal.com,"19,700",Deanna Strable-Soethout
+278,Kohl's,General Merchandisers,"15,750,000,000",Menomonee Falls,Wisconsin,53051,kohls.com,"60,000",Michael Bender
+279,PPG Industries,Chemicals,"15,690,000,000",Pittsburgh,Pennsylvania,15272,ppg.com,"46,000",Timothy Knavish
+280,Builders FirstSource,"Building Materials, Glass","15,650,000,000",Irving,Texas,75039,bldr.com,"29,000",Peter Jackson
+281,Fluor,Engineering & Construction,"15,590,000,000",Irving,Texas,75039,fluor.com,"26,866",James Breuer
+282,Whirlpool,"Electronics, Electrical Equip.","15,560,000,000",Benton Harbor,Michigan,49022,whirlpoolcorp.com,"44,000",Marc Bitzer
+283,Farmers Insurance Exchange,Insurance: Property and Casualty (Mutual),"15,456,000,000",Woodland Hills,California,91367,farmers.com,"9,909",Raul Nicholas Vargas Ochoa
+284,Tractor Supply,Specialty Retailers: Other,"15,400,000,000",Brentwood,Tennessee,37027,tractorsupply.com,"39,000",Harry Lawton III
+285,Gap,Specialty Retailers: Apparel,"15,280,000,000",San Francisco,California,94105,gapinc.com,"82,000",Richard Dickson
+286,EchoStar,Telecommunications,"15,180,000,000",Englewood,Colorado,80112,echostar.com,"13,700",Hamid Akhavan
+287,Sonic Automotive,"Automotive Retailing, Services","15,180,000,000",Charlotte,North Carolina,28211,sonicautomotive.com,"10,800",David Bruton Smith
+288,Stanley Black & Decker,Industrial Machinery,"15,170,000,000",New Britain,Connecticut,6053,stanleyblackanddecker.com,"48,500",Donald Allan Jr.
+289,LPL Financial,Securities,"15,160,000,000",San Diego,California,92121,lpl.com,"9,000",Rich Steinmeier
+290,Kyndryl,Information Technology Services,"15,010,000,000",New York,New York,10017,kyndryl.com,"80,000",Martin Schroeter
+291,Kenvue,Household and Personal Products,"15,010,000,000",Summit,New Jersey,7901,kenvue.com,"22,000",Thibaut Mongon
+292,S&P Global,Financial Data Services,"15,010,000,000",New York,New York,10041,spglobal.com,"42,350",Martina Cheung
+293,Corning,"Electronics, Electrical Equip.","14,920,000,000",Corning,New York,14831,corning.com,"56,300",Wendell Weeks
+294,Dick's Sporting Goods,Specialty Retailers: Other,"14,880,000,000",Coraopolis,Pennsylvania,15108,dickssportinggoods.com,"37,350",Lauren Hobart
+295,DTE Energy,Utilities: Gas and Electric,"14,820,000,000",Detroit,Michigan,48226,dteenergy.com,"9,500",Gerardo Norcia
+296,W.R. Berkley,Insurance: Property and Casualty (Stock),"14,650,000,000",Greenwich,Connecticut,6830,berkley.com,"8,606",Robert Berkley Jr.
+297,Diamondback Energy,"Mining, Crude-Oil Production","14,630,000,000",Midland,Texas,79701,diamondbackenergy.com,"1,983",Kaes Van’t Hof
+298,Mutual of Omaha Insurance,"Insurance: Life, Health (Mutual)","14,622,000,000",Omaha,Nebraska,68175,mutualofomaha.com,"6,532",James Blackledge
+299,Nordstrom,General Merchandisers,"14,500,000,000",Seattle,Washington,98101,nordstrom.com,"41,000",Erik Nordstrom
+300,Estée Lauder,Household and Personal Products,"14,450,000,000",New York,New York,10153,elcompanies.com,"53,010",Stéphane de La Faverie
+301,Expedia,Internet Services and Retailing,"14,370,000,000",Seattle,Washington,98119,expediagroup.com,"16,500",Ariane Gorin
+302,Otis Worldwide,Industrial Machinery,"14,310,000,000",Farmington,Connecticut,6032,otis.com,"72,000",Judith Marks
+303,FirstEnergy,Utilities: Gas and Electric,"14,280,000,000",Akron,Ohio,44308,firstenergycorp.com,"12,294",Brian Tierney
+304,Regeneron Pharmaceuticals,Pharmaceuticals,"14,250,000,000",Tarrytown,New York,10591,regeneron.com,"15,106",Leonard Schleifer
+305,Textron,Aerospace & Defense,"14,240,000,000",Providence,Rhode Island,2903,textron.com,"34,000",Scott Donnelly
+306,Xcel Energy,Utilities: Gas and Electric,"14,230,000,000",Minneapolis,Minnesota,55401,xcelenergy.com,"11,380",Robert Frenzel
+307,BorgWarner,Motor Vehicles & Parts,"14,180,000,000",Auburn Hills,Michigan,48326,borgwarner.com,"38,300",Joseph Fadool
+308,Alaska Air,Airlines,"14,140,000,000",Seattle,Washington,98188,alaskaair.com,"32,074",Benito Minicucci
+309,Viatris,Pharmaceuticals,"14,120,000,000",Canonsburg,Pennsylvania,15317,viatris.com,"32,000",Scott Smith
+310,CSX,Railroads,"14,120,000,000",Jacksonville,Florida,32202,csx.com,"23,536",Joseph Hinrichs
+311,LKQ,Wholesalers: Diversified,"14,100,000,000",Antioch,Tennessee,37013,lkqcorp.com,"47,000",Justin Jude
+312,Fidelity National Financial,Insurance: Property and Casualty (Stock),"14,060,000,000",Jacksonville,Florida,32204,fnf.com,"23,533",Michael Nolan
+313,Raymond James Financial,Securities,"14,020,000,000",St. Petersburg,Florida,33716,raymondjames.com,"19,000",Paul Shoukry
+314,Reliance,Metals,"13,920,000,000",Scottsdale,Arizona,85254,reliance.com,"16,050",Karla Lewis
+315,Labcorp,Health Care: Pharmacy and Other Services,"13,770,000,000",Burlington,North Carolina,27215,labcorp.com,"65,450",Adam Schechter
+316,Western & Southern Financial,"Insurance: Life, Health (Mutual)","13,769,000,000",Cincinnati,Ohio,45202,westernsouthern.com,"2,744",John Barrett
+317,MasTec,Engineering & Construction,"13,760,000,000",Coral Gables,Florida,33134,mastec.com,"32,000",José Mas
+318,Sempra,Utilities: Gas and Electric,"13,710,000,000",San Diego,California,92101,sempra.com,"16,773",Walker Martin
+319,State Street,Commercial Banks,"13,630,000,000",Boston,Massachusetts,2114,statestreet.com,"52,626",Ronald O'Hanley
+320,United States Steel,Metals,"13,500,000,000",Pittsburgh,Pennsylvania,15219,ussteel.com,"22,053",David Burritt
+321,DaVita,Health Care: Medical Facilities,"13,320,000,000",Denver,Colorado,80202,davita.com,"76,000",Javier Rodriguez
+322,BrightSpring Health Services,Health Care: Pharmacy and Other Services,"13,300,000,000",Louisville,Kentucky,40222,brightspringhealth.com,"37,000",Jon Rousseau
+323,Erie Insurance,Insurance: Property and Casualty (Mutual),"13,177,000,000",Erie,Pennsylvania,16530,erieinsurance.com,"6,747",Timothy NeCastro
+324,Eversource Energy,Utilities: Gas and Electric,"13,150,000,000",Springfield,Massachusetts,1104,eversource.com,"10,680",Joseph Nolan Jr.
+325,Unum,"Insurance: Life, Health (Stock)","13,070,000,000",Chattanooga,Tennessee,37402,unum.com,"10,948",Richard McKenney
+326,Henry Schein,Wholesalers: Health Care,"12,940,000,000",Melville,New York,11747,henryschein.com,"25,000",Stanley Bergman
+327,GXO Logistics,Transportation and Logistics,"12,920,000,000",Greenwich,Connecticut,6831,gxo.com,"128,500",Malcolm Wilson
+328,Alcoa,Metals,"12,870,000,000",Pittsburgh,Pennsylvania,15212,alcoa.com,"13,900",William Oplinger
+329,DuPont,Chemicals,"12,840,000,000",Wilmington,Delaware,19805,dupont.com,"24,000",Lori Koch
+330,Blackstone,Diversified Financials,"12,790,000,000",New York,New York,10154,blackstone.com,"4,895",Stephen Schwarzman
+331,Entergy,Utilities: Gas and Electric,"12,730,000,000",New Orleans,Louisiana,70113,entergy.com,"12,267",Andrew Marsh
+332,DXC Technology,Information Technology Services,"12,710,000,000",Ashburn,Virginia,20147,dxc.technology,"130,000",Raul Fernandez
+333,Lumen Technologies,Telecommunications,"12,690,000,000",Monroe,Louisiana,71203,lumen.com,"25,000",Kathleen Johnson
+334,Ball,"Packaging, Containers","12,690,000,000",Westminster,Colorado,80021,ball.com,"16,000",Daniel Fisher
+335,Ryder System,Transportation and Logistics,"12,680,000,000",Coral Gables,Florida,33134,ryder.com,"50,700",Robert Sanchez
+336,Kellanova,Food Consumer Products,"12,670,000,000",Chicago,Illinois,60654,kellanova.com,"24,000",Steven Cahillane
+337,ServiceNow,Computer Software,"12,670,000,000",Santa Clara,California,95054,servicenow.com,"26,293",William McDermott
+338,Community Health Systems,Health Care: Medical Facilities,"12,640,000,000",Franklin,Tennessee,37067,chs.net,"52,500",Kevin Hammons
+339,DoorDash,Internet Services and Retailing,"12,640,000,000",San Francisco,California,94107,doordash.com,"23,700",Tony Xu
+340,Chewy,Internet Services and Retailing,"12,580,000,000",Plantation,Florida,33322,chewy.com,"18,000",Sumit Singh
+341,Assurant,Insurance: Property and Casualty (Stock),"12,570,000,000",Atlanta,Georgia,30339,assurant.com,"14,200",Keith Demmings
+342,KLA,Semiconductors and Other Electronic Components,"12,520,000,000",Milpitas,California,95035,kla.com,"15,115",Richard Wallace
+343,Darden Restaurants,Food Services,"12,360,000,000",Orlando,Florida,32837,darden.com,"191,105",Ricardo Cardenas
+344,Las Vegas Sands,"Hotels, Casinos, Resorts","12,260,000,000",Las Vegas,Nevada,89113,sands.com,"40,100",Robert Goldstein
+345,Wayfair,Internet Services and Retailing,"12,240,000,000",Boston,Massachusetts,2116,wayfair.com,"12,100",Niraj Shah
+346,Norfolk Southern,Railroads,"12,230,000,000",Atlanta,Georgia,30308,norfolksouthern.com,"19,600",Mark George
+347,Equitable,"Insurance: Life, Health (Stock)","12,220,000,000",New York,New York,10105,equitableholdings.com,"10,300",Mark Pearson
+348,Crown,"Packaging, Containers","12,140,000,000",Tampa,Florida,33637,crowncork.com,"23,000",Timothy Donahue
+349,Hormel Foods,Food Consumer Products,"12,110,000,000",Austin,Minnesota,55912,hormelfoods.com,"20,000",James Snee
+350,AES,Utilities: Gas and Electric,"12,090,000,000",Arlington,Virginia,22203,aes.com,"9,100",Andrés Gluski
+351,Arthur J. Gallagher,Diversified Financials,"12,080,000,000",Rolling Meadows,Illinois,60008,ajg.com,"55,977",Patrick Gallagher Jr.
+352,Cincinnati Financial,Insurance: Property and Casualty (Stock),"12,080,000,000",Fairfield,Ohio,45014,cinfin.com,"5,624",Stephen Spray
+353,J.B. Hunt Transport Services,"Trucking, Truck Leasing","12,050,000,000",Lowell,Arkansas,72745,jbhunt.com,"33,646",Shelley Simpson
+354,Air Products & Chemicals,Chemicals,"12,040,000,000",Allentown,Pennsylvania,18106,airproducts.com,"22,425",Eduardo Menezes
+355,Jacobs Solutions,Diversified Outsourcing Services,"12,030,000,000",Dallas,Texas,75201,jacobs.com,"44,050",Bob Pragada
+356,Huntington Ingalls Industries,Aerospace & Defense,"12,010,000,000",Newport News,Virginia,23607,hii.com,"44,000",Christopher Kastner
+357,Hess,"Mining, Crude-Oil Production","12,000,000,000",New York,New York,10036,hess.com,"1,797",John Hess
+358,Ulta Beauty,Specialty Retailers: Other,"11,980,000,000",Bolingbrook,Illinois,60440,ulta.com,"39,000",Kecia Steelman
+359,Airbnb,Internet Services and Retailing,"11,940,000,000",San Francisco,California,94103,airbnb.com,"7,300",Brian Chesky
+360,Mosaic,Chemicals,"11,890,000,000",Tampa,Florida,33602,mosaicco.com,"13,765",Bruce Bodine
+361,Chipotle Mexican Grill,Food Services,"11,790,000,000",Newport Beach,California,92660,chipotle.com,"130,504",Scott Boatwright
+362,Vertex Pharmaceuticals,Pharmaceuticals,"11,720,000,000",Boston,Massachusetts,2210,vrtx.com,"6,100",Reshma Kewalramani
+363,Public Service Enterprise,Utilities: Gas and Electric,"11,720,000,000",Newark,New Jersey,7102,pseg.com,"13,047",Ralph LaRossa
+364,Booz Allen Hamilton,Information Technology Services,"11,710,000,000",McLean,Virginia,22102,boozallen.com,"34,200",Horacio Rozanski
+365,Avis Budget,"Automotive Retailing, Services","11,700,000,000",Parsippany,New Jersey,7054,avisbudgetgroup.com,"20,500",Joseph Ferraro
+366,Owens Corning,"Building Materials, Glass","11,660,000,000",Toledo,Ohio,43659,owenscorning.com,"25,000",Brian Chambers
+367,Graybar Electric,Wholesalers: Diversified,"11,646,000,000",St. Louis,Missouri,63105,graybar.com,"10,000",Kathleen Mazzarella
+368,Andersons,Food Production,"11,600,000,000",Maumee,Ohio,43537,andersonsinc.com,"2,262",William Krueger
+369,Williams,Pipelines,"11,580,000,000",Tulsa,Oklahoma,74172,williams.com,"5,829",Alan Armstrong
+370,Berry Global,"Packaging, Containers","11,500,000,000",Evansville,Indiana,47710,berryglobal.com,"42,000",Kevin Kwilinski
+371,Yum China,Food Services,"11,500,000,000",Plano,Texas,75074,yumchina.com,"245,500",Joey Wat
+372,Hershey,Food Consumer Products,"11,490,000,000",Hershey,Pennsylvania,17033,thehersheycompany.com,"19,285",Michele Buck
+373,Westlake,Chemicals,"11,480,000,000",Houston,Texas,77056,westlake.com,"15,540",Jean-Marc Gilson
+374,Conagra Brands,Food Consumer Products,"11,450,000,000",Chicago,Illinois,60654,conagrabrands.com,"18,500",Sean Connolly
+375,Caesars Entertainment,"Hotels, Casinos, Resorts","11,370,000,000",Reno,Nevada,89501,caesars.com,"50,000",Thomas Reeg
+376,Motorola Solutions,Network and Other Communications Equipment,"11,310,000,000",Chicago,Illinois,60661,motorolasolutions.com,"21,000",Gregory Brown
+377,Oscar Health,Health Care: Insurance and Managed Care,"11,290,000,000",New York,New York,10013,hioscar.com,"2,400",Mark Bertolini
+378,Molson Coors Beverage,Beverages,"11,210,000,000",Chicago,Illinois,60606,molsoncoors.com,"16,800",Gavin Hattersley
+379,Burlington Stores,Specialty Retailers: Apparel,"11,190,000,000",Burlington,New Jersey,8016,burlingtoninvestors.com,"47,295",Michael O’Sullivan
+380,Expeditors International of Washington,Transportation and Logistics,"11,170,000,000",Bellevue,Washington,98006,expeditors.com,"18,917",Daniel Wall
+381,International Flavors & Fragrances,Chemicals,"11,070,000,000",New York,New York,10019,iff.com,"22,400",Erik Fyrwald
+382,Baxter International,Medical Products and Equipment,"11,020,000,000",Deerfield,Illinois,60015,baxter.com,"38,000",Brent Shafer
+383,Analog Devices,Semiconductors and Other Electronic Components,"11,020,000,000",Wilmington,Massachusetts,1887,analog.com,"24,000",Vincent Roche
+384,Hilton,"Hotels, Casinos, Resorts","11,000,000,000",McLean,Virginia,22102,hilton.com,"181,000",Christopher Nassetta
+385,Toll Brothers,Homebuilders,"10,970,000,000",Fort Washington,Pennsylvania,19034,tollbrothers.com,"4,900",Douglas Yearley Jr.
+386,Thrivent Financial for Lutherans,"Insurance: Life, Health (Mutual)","10,918,000,000",Minneapolis,Minnesota,55415,thrivent.com,"3,983",Teresa Rasmussen
+387,Quest Diagnostics,Health Care: Pharmacy and Other Services,"10,850,000,000",Secaucus,New Jersey,7094,questdiagnostics.com,"50,500",James Davis
+388,Interpublic,"Advertising, Marketing","10,800,000,000",New York,New York,10022,interpublic.com,"53,300",Philippe Krakowsky
+389,Westinghouse Air Brake Technologies,Industrial Machinery,"10,790,000,000",Pittsburgh,Pennsylvania,15212,wabteccorp.com,"29,500",Rafael Santana
+390,Owens & Minor,Wholesalers: Health Care,"10,770,000,000",Glen Allen,Virginia,23060,owens-minor.com,"23,200",Edward Pesicka
+391,Mohawk Industries,"Home Equipment, Furnishings","10,720,000,000",Calhoun,Georgia,30701,mohawkind.com,"41,900",Jeffrey Lorberbaum
+392,Ebay,Internet Services and Retailing,"10,710,000,000",San Jose,California,95125,ebay.com,"11,500",Jamie Iannone
+393,Delek US,Petroleum Refining,"10,670,000,000",Brentwood,Tennessee,37027,delekus.com,"1,987",Avigal Soreq
+394,NVR,Homebuilders,"10,580,000,000",Reston,Virginia,20190,nvrinc.com,"7,000",Eugene Bredow
+395,Cintas,Diversified Outsourcing Services,"10,560,000,000",Cincinnati,Ohio,45262,cintas.com,"46,500",Todd Schneider
+396,Ally Financial,Diversified Financials,"10,500,000,000",Detroit,Michigan,48226,ally.com,"10,700",Michael Rhodes
+397,Lululemon athletica,Specialty Retailers: Apparel,"10,500,000,000",Sumner,Washington,98390,lululemon.com,"39,000",Calvin McDonald
+398,A-Mark Precious Metals,Wholesalers: Diversified,"10,500,000,000",El Segundo,California,90245,amark.com,486,Gregory Roberts
+399,Fidelity National Information,Financial Data Services,"10,460,000,000",Jacksonville,Florida,32202,fisglobal.com,"50,000",Stephanie Ferris
+400,American Tower,Real Estate,"10,450,000,000",Boston,Massachusetts,2116,americantower.com,"4,691",Steven Vondran
+401,FM,Insurance: Property and Casualty (Stock),"10,414,000,000",Johnston,Rhode Island,2919,fm.com,"5,845",Malcolm Roberts
+402,Autoliv,Motor Vehicles & Parts,"10,400,000,000",Auburn Hills,Michigan,48326,autoliv.com,"62,266",Mikael Bratt
+403,Oshkosh,Construction and Farm Machinery,"10,330,000,000",Oshkosh,Wisconsin,54902,oshkoshcorp.com,"18,500",John Pfeifer
+404,Campbell's,Food Consumer Products,"10,160,000,000",Camden,New Jersey,8103,thecampbellscompany.com,"14,400",Mick Beekhuizen
+405,Western Digital,"Computers, Office Equipment","10,130,000,000",San Jose,California,95119,westerndigital.com,"51,000",Tiang Yew Tan
+406,Global Payments,Financial Data Services,"10,080,000,000",Atlanta,Georgia,30326,globalpaymentsinc.com,"27,000",Cameron Bready
+407,Biogen,Pharmaceuticals,"10,070,000,000",Cambridge,Massachusetts,2142,biogen.com,"7,605",Christopher Viehbacher
+408,AGCO,Construction and Farm Machinery,"10,050,000,000",Duluth,Georgia,30096,agcocorp.com,"24,000",Eric Hansotia
+409,Dana,Motor Vehicles & Parts,"9,960,000,000",Maumee,Ohio,43537,dana.com,"39,600",Bruce McDonald
+410,Welltower,Real Estate,"9,910,000,000",Toledo,Ohio,43615,welltower.com,685,Shankh Mitra
+411,THOR Industries,Motor Vehicles & Parts,"9,830,000,000",Elkhart,Indiana,46514,thorindustries.com,"22,300",Robert Martin
+412,Seaboard,Food Production,"9,820,000,000",Merriam,Kansas,66202,seaboardcorp.com,"14,000",Robert Steer
+413,Intercontinental Exchange,Securities,"9,750,000,000",Atlanta,Georgia,30328,ice.com,"12,920",Jeffrey Sprecher
+414,Concentrix,Information Technology Services,"9,720,000,000",Newark,California,94560,concentrix.com,"450,000",Christopher Caldwell
+415,Celanese,Chemicals,"9,710,000,000",Irving,Texas,75039,celanese.com,"12,163",Scott Richardson
+416,Vertiv,"Electronics, Electrical Equip.","9,700,000,000",Westerville,Ohio,43082,vertiv.com,"31,000",Giordano Albertazzi
+417,Synchrony Financial,Diversified Financials,"9,650,000,000",Stamford,Connecticut,6902,synchrony.com,"20,000",Brian Doubles
+418,Constellation Brands,Beverages,"9,620,000,000",Victor,New York,14564,cbrands.com,"9,300",William Newlands
+419,Intuitive Surgical,Medical Products and Equipment,"9,610,000,000",Sunnyvale,California,94086,intuitive.com,"15,638",Gary Guthart
+420,Palo Alto Networks,Network and Other Communications Equipment,"9,560,000,000",Santa Clara,California,95054,paloaltonetworks.com,"15,289",Nikesh Arora
+421,WEC Energy,Utilities: Gas and Electric,"9,550,000,000",Milwaukee,Wisconsin,53203,wecenergygroup.com,"7,017",Scott Lauber
+422,VF,Apparel,"9,540,000,000",Denver,Colorado,80202,vfc.com,"24,000",Bracken Darrell
+423,SpartanNash,Wholesalers: Food and Grocery,"9,500,000,000",Byron Center,Michigan,49315,spartannash.com,"15,000",Tony Sarsam
+424,QVC,Internet Services and Retailing,"9,500,000,000",Englewood,Colorado,80112,qvcgrp.com,"18,984",David Rawlinson II
+425,Ace Hardware,Wholesalers: Diversified,"9,491,000,000",Oak Brook,Illinois,60523,acehardware.com,"12,500",John Venhuizen
+426,Zoetis,Pharmaceuticals,"9,400,000,000",Parsippany,New Jersey,7054,zoetis.com,"13,800",Kristin Peck
+427,APA,"Mining, Crude-Oil Production","9,380,000,000",Houston,Texas,77042,apacorp.com,"2,305",John Christmann IV
+428,Skechers U.S.A.,Apparel,"9,300,000,000",Manhattan Beach,California,90266,skechers.com,"15,100",Robert Greenberg
+429,Icahn Enterprises,Diversified Financials,"9,260,000,000",Sunny Isles Beach,Florida,33160,ielp.com,"15,037",Andrew Teno
+430,Workday,Computer Software,"9,230,000,000",Pleasanton,California,94588,workday.com,"20,482",Carl Eschenbach
+431,CenterPoint Energy,Utilities: Gas and Electric,"9,110,000,000",Houston,Texas,77002,centerpointenergy.com,"8,872",Jason Wells
+432,JetBlue Airways,Airlines,"9,100,000,000",Long Island City,New York,11101,jetblue.com,"19,822",Joanna Geraghty
+433,Prologis,Real Estate,"9,100,000,000",San Francisco,California,94111,prologis.com,"2,703",Hamid Moghadam
+434,M&T Bank,Commercial Banks,"9,080,000,000",Buffalo,New York,14203,mtb.com,"22,101",René Jones
+435,Equinix,Real Estate,"9,080,000,000",Redwood City,California,94065,equinix.com,"13,606",Adaire Fox-Martin
+436,Eastman Chemical,Chemicals,"9,020,000,000",Kingsport,Tennessee,37660,eastman.com,"14,000",Mark Costa
+437,Altice USA,Telecommunications,"9,000,000,000",Long Island City,New York,11101,alticeusa.com,"10,900",Dennis Mathew
+438,PPL,Utilities: Gas and Electric,"8,980,000,000",Allentown,Pennsylvania,18101,pplweb.com,"6,653",Vincent Sorgi
+439,First Citizens BancShares,Commercial Banks,"8,900,000,000",Raleigh,North Carolina,27609,firstcitizens.com,"17,333",Frank Holding Jr.
+440,Xylem,Industrial Machinery,"8,890,000,000",Washington,District Of Columbia,20003,xylem.com,"23,000",Matthew Pine
+441,CACI International,Information Technology Services,"8,860,000,000",Reston,Virginia,20190,caci.com,"24,000",John Mengucci
+442,TransDigm,Aerospace & Defense,"8,830,000,000",Cleveland,Ohio,44115,transdigm.com,"16,600",Kevin Stein
+443,PVH,Apparel,"8,820,000,000",New York,New York,10017,pvh.com,"22,000",Stefan Larsson
+444,Ovintiv,"Mining, Crude-Oil Production","8,790,000,000",Denver,Colorado,80202,ovintiv.com,"1,623",Brendan McCracken
+445,NOV,"Oil and Gas Equipment, Services","8,780,000,000",Houston,Texas,77042,nov.com,"34,010",Clay Williams
+446,Avery Dennison,"Packaging, Containers","8,770,000,000",Mentor,Ohio,44060,averydennison.com,"35,000",Deon Stander
+447,Franklin Resources,Securities,"8,770,000,000",San Mateo,California,94403,franklinresources.com,"10,200",Jennifer Johnson
+448,Packaging Corp. of America,"Packaging, Containers","8,770,000,000",Lake Forest,Illinois,60045,packagingcorp.com,"15,400",Mark Kowlzan
+449,J.M. Smucker,Food Consumer Products,"8,770,000,000",Orrville,Ohio,44667,jmsmucker.com,"9,000",Mark Smucker
+450,Old Republic International,Insurance: Property and Casualty (Stock),"8,750,000,000",Chicago,Illinois,60601,oldrepublic.com,"9,400",Craig Smiddy
+451,Sprouts Farmers Market,Food & Drug Stores,"8,650,000,000",Phoenix,Arizona,85054,sprouts.com,"35,000",Jack Sinclair
+452,ABM Industries,Diversified Outsourcing Services,"8,630,000,000",New York,New York,10006,abm.com,"117,000",Scott Salmirs
+453,Advance Auto Parts,Specialty Retailers: Other,"8,620,000,000",Raleigh,North Carolina,27609,advanceautoparts.com,"48,000",Shane O'Kelly
+454,Graphic Packaging,"Packaging, Containers","8,610,000,000",Atlanta,Georgia,30328,graphicpkg.com,"23,000",Robbert Rietbroek
+455,Sirius XM,Entertainment,"8,550,000,000",New York,New York,10020,siriusxm.com,"5,515",Jennifer Witz
+456,Hertz,"Automotive Retailing, Services","8,520,000,000",Estero,Florida,33928,hertz.com,"26,000",Gil West
+457,Jefferies Financial,Diversified Financials,"8,500,000,000",New York,New York,10022,jefferies.com,"7,822",Richard Handler
+458,News Corp.,"Publishing, Printing","8,500,000,000",New York,New York,10036,newscorp.com,"23,900",Robert Thomson
+459,Solventum,Medical Products and Equipment,"8,400,000,000",Maplewood,Minnesota,55144,solventum.com,"22,000",Bryan Hanson
+460,Taylor Morrison Home,Homebuilders,"8,380,000,000",Scottsdale,Arizona,85251,taylormorrison.com,"3,000",Sheryl Palmer
+461,Rockwell Automation,"Electronics, Electrical Equip.","8,340,000,000",Milwaukee,Wisconsin,53204,rockwellautomation.com,"27,000",Blake Moret
+462,CMS Energy,Utilities: Gas and Electric,"8,300,000,000",Jackson,Michigan,49201,cmsenergy.com,"8,324",Garrick Rochow
+463,Insight Enterprises,Information Technology Services,"8,270,000,000",Chandler,Arizona,85286,insight.com,"14,324",Joyce Mullen
+464,Securian Financial,"Insurance: Life, Health (Stock)","8,226,000,000",St. Paul,Minnesota,55101,securian.com,"5,570",Christopher Hilger
+465,Post,Food Consumer Products,"8,160,000,000",St. Louis,Missouri,63144,postholdings.com,"11,480",Robert Vitale
+466,Fifth Third Bancorp,Commercial Banks,"8,130,000,000",Cincinnati,Ohio,45263,53.com,"18,616",Timothy Spence
+467,Sanmina,Semiconductors and Other Electronic Components,"8,130,000,000",San Jose,California,95134,sanmina.com,"34,500",Jure Sola
+468,Voya Financial,Diversified Financials,"8,090,000,000",New York,New York,10169,voya.com,"10,000",Heather Lavallee
+469,XPO,Transportation and Logistics,"8,070,000,000",Greenwich,Connecticut,6831,xpo.com,"39,500",Mario Harik
+470,Yum Brands,Food Services,"8,060,000,000",Louisville,Kentucky,40213,yum.com,"31,691",David Gibbs
+471,KBR,Information Technology Services,"8,040,000,000",Houston,Texas,77002,kbr.com,"38,000",Stuart Bradie
+472,American Financial,Insurance: Property and Casualty (Stock),"8,010,000,000",Cincinnati,Ohio,45202,afginc.com,"8,700",Carl Lindner lll
+473,Zimmer Biomet,Medical Products and Equipment,"8,010,000,000",Warsaw,Indiana,46580,zimmerbiomet.com,"17,000",Ivan Tornos
+474,Fastenal,Wholesalers: Diversified,"8,000,000,000",Winona,Minnesota,55987,fastenal.com,"20,958",Daniel Florness
+475,Foot Locker,Specialty Retailers: Apparel,"8,000,000,000",New York,New York,10001,footlocker.com,"30,223",Mary Dillon
+476,Monster Beverage,Beverages,"7,980,000,000",Corona,California,92879,monsterbevcorp.com,"6,043",Rodney Sacks
+477,Howmet Aerospace,Aerospace & Defense,"7,980,000,000",Pittsburgh,Pennsylvania,15212,howmet.com,"23,930",John Plant
+478,Northern Trust,Commercial Banks,"7,930,000,000",Chicago,Illinois,60603,northerntrust.com,"23,300",Michael O'Grady
+479,Dover,Industrial Machinery,"7,920,000,000",Downers Grove,Illinois,60515,dovercorporation.com,"24,000",Richard Tobin
+480,Williams-Sonoma,Specialty Retailers: Other,"7,910,000,000",San Francisco,California,94109,williams-sonomainc.com,"19,600",Laura Alber
+481,ARKO,Specialty Retailers: Other,"7,890,000,000",Richmond,Virginia,23227,arkocorp.com,"11,772",Arie Kotler
+482,Vulcan Materials,"Building Materials, Glass","7,880,000,000",Birmingham,Alabama,35242,vulcanmaterials.com,"11,971",Thomas Hill
+483,Regions Financial,Commercial Banks,"7,800,000,000",Birmingham,Alabama,35203,regions.com,"19,644",John Turner Jr.
+484,Commercial Metals,Metals,"7,800,000,000",Irving,Texas,75039,cmc.com,"13,178",Peter Matt
+485,Core & Main,Wholesalers: Diversified,"7,760,000,000",St. Louis,Missouri,63146,coreandmain.com,"5,700",Mark Witkowski
+486,Rush Enterprises,"Automotive Retailing, Services","7,670,000,000",New Braunfels,Texas,78130,rushenterprises.com,"7,882",Rush
+487,Microchip Technology,Semiconductors and Other Electronic Components,"7,600,000,000",Chandler,Arizona,85224,microchip.com,"22,300",Steve Sanghi
+488,Masco,"Home Equipment, Furnishings","7,600,000,000",Livonia,Michigan,48152,masco.com,"18,000",Keith Allman
+489,Interactive Brokers,Securities,"7,500,000,000",Greenwich,Connecticut,6830,interactivebrokers.com,"2,998",Milan Galik
+490,Huntington Bancshares,Commercial Banks,"7,500,000,000",Columbus,Ohio,43287,huntington.com,"19,932",Stephen Steinour
+491,Endeavor,Entertainment,"7,500,000,000",Beverly Hills,California,90210,endeavorco.com,"10,000",Mark Shapiro
+492,Par Pacific,Petroleum Refining,"7,480,000,000",Houston,Texas,77024,parpacific.com,"1,787",William Monteleone
+493,Citizens Financial,Commercial Banks,"7,440,000,000",Providence,Rhode Island,2903,citizensbank.com,"17,287",Bruce Van Saun
+494,Watsco,Wholesalers: Diversified,"7,410,000,000",Miami,Florida,33133,watsco.com,"7,258",Albert Nahmad
+495,Science Applications International,Information Technology Services,"7,350,000,000",Reston,Virginia,20190,saic.com,"24,000",Toni Townes-Whitley
+496,Electronic Arts,Entertainment,"7,290,000,000",Redwood City,California,94065,ea.com,"13,700",Andrew Wilson
+497,Newell Brands,"Home Equipment, Furnishings","7,260,000,000",Atlanta,Georgia,30328,newellbrands.com,"23,700",Christopher Peterson
+498,Ingredion,Food Production,"7,260,000,000",Westchester,Illinois,60154,ingredion.com,"11,200",James Zallie
+499,KeyCorp,Commercial Banks,"7,200,000,000",Cleveland,Ohio,44114,key.com,"16,753",Christopher Gorman
+500,QXO Building Products,Wholesalers: Diversified,"5,500,000,000",Herndon,Virginia,20170,qxo.com,"8,068",Julian Francis
