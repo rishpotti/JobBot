@@ -1,11 +1,37 @@
 import csv
 import smtplib
-import os
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+#import os
+#from email.mime.text import MIMEText
+#from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from jobspy import scrape_jobs
-import pandas as pd
+#from jobspy import scrape_jobs
+#import pandas as pd
+
+print("---------- JOB BOT STARTING ----------", flush=True)
+
+try:
+    import os
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    print("✅ Standard libraries imported.", flush=True)
+except Exception as e:
+    print(f"❌ Failed to import standard libraries: {e}", flush=True)
+
+# 2. Import Pandas safely
+try:
+    import pandas as pd
+    print("✅ Pandas imported.", flush=True)
+except Exception as e:
+    print(f"❌ CRITICAL: Pandas failed to import. Did you add it to requirements.txt? Error: {e}", flush=True)
+
+# 3. Import JobSpy safely (The most likely culprit)
+try:
+    from jobspy import scrape_jobs
+    print("✅ JobSpy imported.", flush=True)
+except Exception as e:
+    print(f"❌ CRITICAL: JobSpy failed to import. Error: {e}", flush=True)
+    sys.exit(1)
 
 # --- CONFIGURATION ---
 KEYWORDS = [
