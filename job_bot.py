@@ -283,3 +283,6 @@ def main():
         print(f"Sent {len(filtered_jobs)} unique matches.", flush=True)
     else:
         print("No matches found in the master list today.", flush=True)
+
+if __name__ == "__main__":
+    main()
