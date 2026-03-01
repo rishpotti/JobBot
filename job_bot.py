@@ -4,6 +4,8 @@ import smtplib
 #from email.mime.text import MIMEText
 #from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+import time
+import random
 #from jobspy import scrape_jobs
 #import pandas as pd
 
@@ -133,7 +135,11 @@ def load_fortune_1000(filename="fortune1000.csv"):
     companies = set()
     try:
         # Tries to read the CSV. Assumes a column named 'company' or 'Company' exists.
-        df = pd.read_csv(filename)
+        try:
+            df = pd.read_csv(filename, encoding='utf-8')
+        except UnicodeDecodeError:
+            print("⚠️ UTF-8 failed, trying Latin-1 encoding...", flush=True)
+            df = pd.read_csv(filename, encoding='latin1')
         
         # Clean up column names to be safe
         df.columns = [c.lower().strip() for c in df.columns]
@@ -163,12 +169,14 @@ def is_high_quality(job_company, master_list):
     Checks if the job_company is in the master list.
     Uses fuzzy matching to catch things like 'Walmart Global Tech' matching 'Walmart'.
     """
-    if not job_company: return False
+    if not job_company or not isinstance(job_company, str): 
+        return False
     
     # Normalize the job company name (lowercase, remove punctuation)
     job_norm = job_company.lower().replace(".", "").replace(",", "")
     
     for safe_company in master_list:
+        if not isinstance(safe_company, str): continue
         safe_norm = safe_company.lower().replace(".", "").replace(",", "")
         
         # Check if one is inside the other (e.g. "Google" in "Google LLC")
@@ -239,13 +247,19 @@ def main():
     all_jobs = []
     
     # Split keywords into chunks of 5 to avoid search engine limits
-    chunk_size = 5
+    chunk_size = 4
     keyword_chunks = [KEYWORDS[i:i + chunk_size] for i in range(0, len(KEYWORDS), chunk_size)]
     
     print(f"Scraping jobs in {len(keyword_chunks)} batches...", flush=True)
     
     for i, batch in enumerate(keyword_chunks):
         print(f"  - Batch {i+1}/{len(keyword_chunks)}: {batch}", flush=True)
+
+        if i > 0:
+            sleep_time = random.uniform(15, 35)
+            print(f"    ...sleeping for {int(sleep_time)}s to avoid detection...", flush=True)
+            time.sleep(sleep_time)
+
         try:
             # We explicitly search for "Summer 2026" to avoid old roles
             search_query = " OR ".join(batch)
