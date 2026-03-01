@@ -6,6 +6,7 @@ import smtplib
 from datetime import datetime
 import time
 import random
+import sys
 #from jobspy import scrape_jobs
 #import pandas as pd
 
