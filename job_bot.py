@@ -207,13 +207,15 @@ def send_email(jobs):
     <tr style="background-color: #f2f2f2;">
         <th>Role</th>
         <th>Company</th>
-        <th>Location</th>
+        <th>Locations</th>
         <th>Source</th>
         <th>Link</th>
     </tr>
     """
     
-    for job in jobs:
+    jobs_sorted = sorted(jobs, key=lambda x: str(x.get('company', '')).lower())
+    
+    for job in jobs_sorted:
         company = job.get('company', 'Unknown')
         
         # Gold for Priority Match, Green for Safe/Fortune 1000 Match
@@ -285,11 +287,38 @@ def main():
             continue
 
     # Deduplicate (since some keywords might find the same job)
-    unique_jobs = {j.get('job_url'): j for j in all_jobs if j.get('job_url')}.values()
+    print("🧹 Condensing duplicates...", flush=True)
+    condensed_jobs = {}
     
-    # Filter for Quality
+    for job in all_jobs:
+        company = str(job.get('company') or 'Unknown').strip()
+        title = str(job.get('title') or 'Unknown').strip()
+        
+        # Create a unique key ignoring casing
+        key = (company.lower(), title.lower())
+        loc = str(job.get('location') or 'Unknown').strip()
+        
+        if key not in condensed_jobs:
+            # First time seeing this role, save the whole job dict
+            condensed_jobs[key] = job.copy()
+            # Ensure location is a clean string
+            condensed_jobs[key]['location'] = loc if loc != 'None' else 'Unknown'
+        else:
+            # We have seen this company+role before. Combine the locations.
+            existing_locs = condensed_jobs[key].get('location', '')
+            
+            if loc and loc != 'Unknown' and loc != 'None' and loc not in existing_locs:
+                if existing_locs == 'Unknown' or not existing_locs:
+                    condensed_jobs[key]['location'] = loc
+                else:
+                    # Append the new location with a pipe separator
+                    condensed_jobs[key]['location'] = f"{existing_locs} | {loc}"
+
+    unique_condensed_list = list(condensed_jobs.values())
+
+    # --- Filter for Quality (using the Master List) ---
     filtered_jobs = [
-        j for j in unique_jobs 
+        j for j in unique_condensed_list 
         if is_high_quality(j.get('company'), master_safe_list)
     ]
 
