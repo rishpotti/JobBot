@@ -7,6 +7,7 @@ from datetime import datetime
 import time
 import random
 import sys
+from supabase import create_client
 #from jobspy import scrape_jobs
 #import pandas as pd
 
@@ -189,7 +190,7 @@ def is_high_quality(job_company, master_list):
 def send_email(jobs):
     sender_email = os.environ.get("EMAIL_USER")
     sender_password = os.environ.get("EMAIL_PASS")
-    receiver_email = "rishpotti@gmail.com"
+    receiver_email = os.environ.get("EMAIL_RECEIVER", "rishpotti@gmail.com")
 
     if not sender_email or not sender_password:
         print("Error: Email credentials not set.")
@@ -244,6 +245,37 @@ def send_email(jobs):
         server.sendmail(sender_email, receiver_email, msg.as_string())
 
 def main():
+    def write_jobs_to_supabase(filtered_jobs, priority_companies):
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SERVICE_KEY")  # Use service key for server-side writes
+        client = create_client(url, key)
+        
+        records = []
+        for job in filtered_jobs:
+            company = str(job.get('company', ''))
+            is_priority = any(p.lower() in company.lower() for p in priority_companies)
+            
+            records.append({
+                "title":        str(job.get('title', 'Unknown')),
+                "company":      company,
+                "location":     str(job.get('location', 'Unknown')),
+                "site":         str(job.get('site', 'Unknown')),
+                "job_url":      str(job.get('job_url') or job.get('job_url_direct') or ''),
+                "description":  str(job.get('description', '')),
+                "is_priority":  is_priority,
+                "source":       "scraper",
+                "status":       "pending"
+            })
+        
+        if records:
+            # upsert: if (company, title) already exists, skip it (don't overwrite user's status changes)
+            result = client.table("pending_jobs").upsert(
+                records, 
+                on_conflict="company,title",
+                ignore_duplicates=True
+            ).execute()
+            print(f"✅ Wrote {len(records)} jobs to Supabase.", flush=True)
+
     print("Loading company lists...", flush=True)
     master_safe_list = get_master_company_list()
     
@@ -271,11 +303,8 @@ def main():
                 site_name=["linkedin", "indeed", "glassdoor", "zip_recruiter", "google"],
                 search_term=search_query,
                 location="United States",
-                results_wanted=20, # Smaller number per batch adds up to a lot
-                hours_old=24, 
-                country_urlpatterns={
-                    "Global": "https://www.linkedin.com/jobs/search/?keywords={}&location={}"
-                }
+                results_wanted=35, # Smaller number per batch adds up to a lot
+                hours_old=24
             )
             
             # Append results to our master list
@@ -327,6 +356,10 @@ def main():
         print(f"Sent {len(filtered_jobs)} unique matches.", flush=True)
     else:
         print("No matches found in the master list today.", flush=True)
+
+    write_jobs_to_supabase(filtered_jobs, priority_companies)
+
+    
 
 if __name__ == "__main__":
     main()
