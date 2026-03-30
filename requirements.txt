@@ -2,3 +2,4 @@ pandas
 python-jobspy
 requests
 beautifulsoup4
+supabase==2.4.0
