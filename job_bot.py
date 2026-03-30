@@ -722,8 +722,10 @@ def scrape_ashby(timeout: int = 10) -> list:
 
     Ashby API endpoint (no auth required):
       GET https://api.ashbyhq.com/posting-api/job-board/{slug}
-      Returns: {"jobPostings": [{"title", "location": {"city","region"}, "jobUrl",
-                                  "descriptionPlain", "isListed", ...}]}
+
+    Ashby returns location as a flat string field 'locationName' (e.g. "San Francisco, CA")
+    NOT as a nested object. The 'location' nested field only exists in some versions.
+    We check both to be safe.
 
     Only returns listings where isListed=true (publicly visible roles).
     """
@@ -740,13 +742,15 @@ def scrape_ashby(timeout: int = 10) -> list:
             resp = requests.get(url, timeout=timeout)
 
             if resp.status_code == 404:
-                print(f"  ⚠️  {company_name}: slug \'{slug}\' not found (404) — update ASHBY_COMPANIES.", flush=True)
+                print(f"  ⚠️  {company_name}: slug '{slug}' not found (404) — update ASHBY_COMPANIES.", flush=True)
                 continue
             if resp.status_code != 200:
                 print(f"  ⚠️  {company_name}: HTTP {resp.status_code}", flush=True)
                 continue
 
-            postings = resp.json().get("jobPostings", [])
+            data     = resp.json()
+            postings = data.get("jobPostings", [])
+            print(f"  → {company_name}: {len(postings)} total postings found.", flush=True)
             matched  = 0
 
             for job in postings:
@@ -758,18 +762,28 @@ def scrape_ashby(timeout: int = 10) -> list:
                 if not _title_is_relevant(title):
                     continue
 
-                # Ashby location is a nested object: {"city": "...", "region": "..."}
-                loc_obj = job.get("location") or {}
-                if isinstance(loc_obj, dict):
-                    city   = loc_obj.get("city", "")
-                    region = loc_obj.get("region", "")
-                    loc_str = ", ".join(filter(None, [city, region])) or "Unknown"
+                # Ashby returns location as a flat string in 'locationName'.
+                # Some versions also have a nested 'location' dict — check both.
+                loc_str = ""
+                loc_name = job.get("locationName", "")
+                if loc_name:
+                    loc_str = str(loc_name)
                 else:
-                    loc_str = str(loc_obj) or "Unknown"
+                    loc_obj = job.get("location") or {}
+                    if isinstance(loc_obj, dict):
+                        city   = loc_obj.get("locationName") or loc_obj.get("city", "")
+                        region = loc_obj.get("region", "")
+                        loc_str = ", ".join(filter(None, [city, region]))
+                    elif isinstance(loc_obj, str):
+                        loc_str = loc_obj
+
+                loc_str = loc_str.strip() or "Unknown"
 
                 if not _is_us_location(loc_str):
                     continue
 
+                # Ashby provides full description as HTML in 'descriptionHtml'
+                # and plain text in 'descriptionPlain' — prefer plain text.
                 description = str(job.get("descriptionPlain", "")).strip()
 
                 results.append({
@@ -777,13 +791,15 @@ def scrape_ashby(timeout: int = 10) -> list:
                     "company":     company_name,
                     "location":    loc_str,
                     "site":        "ashby",
-                    "job_url":     job.get("jobUrl", ""),
+                    "job_url":     job.get("jobUrl", "") or job.get("applyUrl", ""),
                     "description": description,
                 })
                 matched += 1
 
             if matched:
                 print(f"  ✅ {company_name}: {matched} matching role(s).", flush=True)
+            elif postings:
+                print(f"  — {company_name}: {len(postings)} postings, none matched title/location filter.", flush=True)
 
         except requests.exceptions.Timeout:
             print(f"  ⚠️  {company_name}: request timed out.", flush=True)
