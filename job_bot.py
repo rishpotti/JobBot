@@ -150,29 +150,27 @@ PRIORITY_COMPANIES = [
 
 
 # =============================================================================
-# ATS CONFIGURATION — Greenhouse & Lever
+# ATS CONFIGURATION — Greenhouse, Lever & Ashby
 # =============================================================================
-# Greenhouse and Lever are the two dominant ATS platforms used by tech,
-# fintech, and AI companies. Their job board endpoints are fully public,
-# unauthenticated, and return clean JSON — no WAF, no scraping, no rate limits.
-# This means postings show up here before they propagate to LinkedIn/Indeed,
-# often by 24–48 hours.
+# All three ATS platforms expose fully public, unauthenticated JSON APIs.
+# Postings appear here 24–48 hours before propagating to LinkedIn/Indeed.
 #
-# HOW TO FIND A SLUG:
-#   Greenhouse: visit https://boards.greenhouse.io/{slug}/jobs
-#   Lever:      visit https://jobs.lever.co/{slug}
-# If the page loads with job listings, the slug is correct.
-# Add new companies by appending to the relevant dict below.
+# HOW TO VERIFY OR ADD A SLUG:
+#   Greenhouse : https://boards.greenhouse.io/{slug}/jobs       → 200 = valid
+#   Lever      : https://jobs.lever.co/{slug}                   → 200 = valid
+#   Ashby      : https://jobs.ashbyhq.com/{slug}                → loads = valid
+#                API: https://api.ashbyhq.com/posting-api/job-board/{slug}
+#
+# Slugs that returned persistent 404s have been removed. Add them back only
+# after manually confirming the correct slug and ATS platform.
 
 GREENHOUSE_COMPANIES = {
     # Company display name   : Greenhouse board slug
+    # Verified working as of March 2026
     "Anthropic":              "anthropic",
-    "OpenAI":                 "openai",
     "Airbnb":                 "airbnb",
     "Stripe":                 "stripe",
     "Databricks":             "databricks",
-    "Snowflake":              "snowflakecomputing",
-    "Palantir":               "palantir",
     "Pinterest":              "pinterest",
     "Lyft":                   "lyft",
     "Coinbase":               "coinbase",
@@ -180,38 +178,33 @@ GREENHOUSE_COMPANIES = {
     "Duolingo":               "duolingo",
     "Discord":                "discord",
     "Figma":                  "figma",
-    "Notion":                 "notion",
     "Brex":                   "brex",
-    "Plaid":                  "plaid",
-    "Rivian":                 "rivian",
     "Scale AI":               "scaleai",
-    "Weights & Biases":       "wandb",
-    "Hugging Face":           "huggingface",
-    "Cohere":                 "cohere",
-    "Replit":                 "replit",
     "Verkada":                "verkada",
-    "Benchling":              "benchling",
-    "Tempus":                 "tempus",
-    "Recursion":              "recursionpharma",
+    # Corrected slugs (were 404ing under wrong slug / wrong ATS)
+    "Waymo":                  "Waymo",             # capital W required
+    "Anduril":                "andurilindustries",  # moved from Lever
 }
 
 LEVER_COMPANIES = {
     # Company display name   : Lever posting slug
-    "Anduril":                "anduril-industries",
-    "Waymo":                  "waymo",
-    "Cruise":                 "cruise",
+    # Verified working as of March 2026
     "Zoox":                   "zoox",
-    "Nuro":                   "nuro",
-    "Shield AI":              "shieldai",
-    "Saildrone":              "saildrone",
-    "Relativity Space":       "relativity",
-    "Varda Space":            "varda",
-    "Rad AI":                 "radai",
-    "Viz.ai":                 "vizai",
-    "Imbue":                  "imbue",
-    "Perplexity":             "perplexity-ai",
-    "Mistral AI":             "mistral",
-    "Together AI":            "together-ai",
+    # Add verified slugs here as you confirm them
+}
+
+# Ashby is the third major ATS, now used by many AI-first companies
+# that previously used Greenhouse or Lever.
+# API endpoint: GET https://api.ashbyhq.com/posting-api/job-board/{slug}
+# Returns: {"jobPostings": [{"title", "location": {"city","region"}, "jobUrl", ...}]}
+ASHBY_COMPANIES = {
+    # Company display name   : Ashby org slug
+    # Verified working as of March 2026
+    "OpenAI":                 "openai",
+    "Cohere":                 "cohere",
+    "Replit":                 "replit",
+    "Notion":                 "notion",
+    "Perplexity":             "Perplexity",  # case-sensitive slug
 }
 
 # ── ATS Title Filtering ───────────────────────────────────────────────────────
@@ -722,6 +715,85 @@ def scrape_lever(timeout: int = 10) -> list:
     return results
 
 
+def scrape_ashby(timeout: int = 10) -> list:
+    """
+    Queries the public Ashby job board API for every company in ASHBY_COMPANIES.
+    Returns matching internship roles as normalized job dicts.
+
+    Ashby API endpoint (no auth required):
+      GET https://api.ashbyhq.com/posting-api/job-board/{slug}
+      Returns: {"jobPostings": [{"title", "location": {"city","region"}, "jobUrl",
+                                  "descriptionPlain", "isListed", ...}]}
+
+    Only returns listings where isListed=true (publicly visible roles).
+    """
+    if requests is None:
+        print("⚠️ Requests not available — skipping Ashby scrape.", flush=True)
+        return []
+
+    results = []
+    print(f"\n🔷 Scraping Ashby for {len(ASHBY_COMPANIES)} companies...", flush=True)
+
+    for company_name, slug in ASHBY_COMPANIES.items():
+        try:
+            url = f"https://api.ashbyhq.com/posting-api/job-board/{slug}"
+            resp = requests.get(url, timeout=timeout)
+
+            if resp.status_code == 404:
+                print(f"  ⚠️  {company_name}: slug \'{slug}\' not found (404) — update ASHBY_COMPANIES.", flush=True)
+                continue
+            if resp.status_code != 200:
+                print(f"  ⚠️  {company_name}: HTTP {resp.status_code}", flush=True)
+                continue
+
+            postings = resp.json().get("jobPostings", [])
+            matched  = 0
+
+            for job in postings:
+                # Skip unlisted / internal roles
+                if not job.get("isListed", True):
+                    continue
+
+                title = str(job.get("title", ""))
+                if not _title_is_relevant(title):
+                    continue
+
+                # Ashby location is a nested object: {"city": "...", "region": "..."}
+                loc_obj = job.get("location") or {}
+                if isinstance(loc_obj, dict):
+                    city   = loc_obj.get("city", "")
+                    region = loc_obj.get("region", "")
+                    loc_str = ", ".join(filter(None, [city, region])) or "Unknown"
+                else:
+                    loc_str = str(loc_obj) or "Unknown"
+
+                if not _is_us_location(loc_str):
+                    continue
+
+                description = str(job.get("descriptionPlain", "")).strip()
+
+                results.append({
+                    "title":       title,
+                    "company":     company_name,
+                    "location":    loc_str,
+                    "site":        "ashby",
+                    "job_url":     job.get("jobUrl", ""),
+                    "description": description,
+                })
+                matched += 1
+
+            if matched:
+                print(f"  ✅ {company_name}: {matched} matching role(s).", flush=True)
+
+        except requests.exceptions.Timeout:
+            print(f"  ⚠️  {company_name}: request timed out.", flush=True)
+        except Exception as e:
+            print(f"  ❌ {company_name}: unexpected error — {e}", flush=True)
+
+    print(f"🔷 Ashby total: {len(results)} roles.", flush=True)
+    return results
+
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -775,13 +847,14 @@ def main():
 
     print(f"\nRaw results from jobspy: {len(all_jobs)}", flush=True)
 
-    # ── ATS scrapes (Greenhouse + Lever) ─────────────────────────────────────
-    # These run after the jobspy batches with no sleep needed — they're hitting
-    # lightweight JSON APIs, not scraping rendered HTML through a WAF.
+    # ── ATS scrapes (Greenhouse + Lever + Ashby) ─────────────────────────────
+    # Lightweight JSON API calls — no sleep needed between them.
     greenhouse_jobs = scrape_greenhouse()
     lever_jobs      = scrape_lever()
+    ashby_jobs      = scrape_ashby()
     all_jobs.extend(greenhouse_jobs)
     all_jobs.extend(lever_jobs)
+    all_jobs.extend(ashby_jobs)
 
     print(f"Raw results total (jobspy + ATS): {len(all_jobs)}", flush=True)
 
