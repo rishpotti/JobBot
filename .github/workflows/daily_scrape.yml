@@ -4,28 +4,33 @@ on:
   schedule:
     # Runs at 12:00 UTC (7:00 AM EST) every day
     - cron: '0 12 * * *'
-  workflow_dispatch: # Allows you to run it manually to test
+  workflow_dispatch: # Allows manual trigger for testing
 
 jobs:
-  scrape-and-email:
+  scrape-and-notify:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4  # FIX: Updated from deprecated @v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5  # FIX: Updated from deprecated @v4
         with:
           python-version: '3.11'
+          cache: 'pip'  # Caches pip dependencies — shaves 30–60s off each run
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Scraper
+      - name: Run scraper
         env:
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          PYTHONUNBUFFERED: "1"
+          EMAIL_USER:           ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS:           ${{ secrets.EMAIL_PASS }}
+          EMAIL_RECEIVER:       ${{ secrets.EMAIL_RECEIVER }}       # NEW: replaces hardcoded address
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}         # NEW: Supabase project URL
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }} # NEW: server-side write key
+          PYTHONUNBUFFERED:     "1"  # Ensures print() output appears in Actions logs in real time
         run: python job_bot.py
