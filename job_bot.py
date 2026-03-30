@@ -214,18 +214,89 @@ LEVER_COMPANIES = {
     "Together AI":            "together-ai",
 }
 
-# Keywords to match against job titles when scraping ATS boards.
-# More permissive than the jobspy KEYWORDS list since we're already
-# targeting the right companies — we just need to filter for relevant roles.
-ATS_TITLE_KEYWORDS = [
-    "data science", "data scientist", "machine learning", "ml engineer",
-    "artificial intelligence", "ai engineer", "applied scientist",
-    "research scientist", "research engineer", "quantitative", "quant",
-    "decision science", "risk model", "generative ai", "llm", "nlp",
-    "natural language", "computer vision", "deep learning", "mlops",
-    "data engineer", "biomedical", "computational biology", "imaging ai",
-    "algorithm engineer", "ai infrastructure", "intern", "internship",
+# ── ATS Title Filtering ───────────────────────────────────────────────────────
+# A role must satisfy BOTH conditions to pass:
+#   1. Its title contains at least one DOMAIN keyword  (what the role is)
+#   2. Its title contains at least one INTERN marker   (confirms it's an internship)
+#
+# This prevents "Marketing Intern", "Legal Intern", "HR Intern", etc. from
+# slipping through just because "intern" appeared in the old flat keyword list.
+
+ATS_DOMAIN_KEYWORDS = [
+    # Core DS / ML
+    "data science", "data scientist",
+    "machine learning", "ml engineer", "ml ",
+    "applied scientist", "applied machine learning", "applied ml",
+    # AI / Research
+    "artificial intelligence", "ai engineer", "ai infrastructure",
+    "research scientist", "research engineer", "algorithm engineer",
+    # Quant / Finance
+    "quantitative", "quant ",
+    "decision science", "risk model", "financial engineer",
+    # Emerging AI
+    "generative ai", "gen ai", "large language model", "llm",
+    "natural language processing", "nlp",
+    "computer vision", "deep learning",
+    # Infra / Eng
+    "mlops", "ml ops", "data engineer",
+    # Domain-specific (Bio / Health)
+    "biomedical", "computational biology", "imaging ai",
 ]
+
+ATS_INTERN_MARKERS = [
+    "intern", "internship", "co-op", "coop", "co op",
+    "summer 2026", "summer2026", "2026",
+]
+
+# ── US Location Filtering ─────────────────────────────────────────────────────
+# Greenhouse and Lever serve global companies. We only want US-based roles.
+# Strategy:
+#   ACCEPT if location contains a US state abbreviation, a US state name,
+#           or a known US-positive term ("remote", "united states", etc.)
+#   REJECT  if location contains a known non-US city or country name
+#   ACCEPT  if location is blank/unknown (US company, likely US role — don't
+#           over-filter; Module 2 lets you review before acting anyway)
+
+US_STATE_ABBREVIATIONS = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
+}
+
+US_POSITIVE_TERMS = {
+    "remote", "united states", "usa", "u.s.a", "u.s.", " us ",
+    "anywhere", "nationwide", "hybrid",
+    # Full state names most likely to appear in location strings
+    "california", "new york", "texas", "washington", "illinois",
+    "massachusetts", "georgia", "colorado", "florida", "virginia",
+    "north carolina", "pennsylvania", "utah", "oregon", "arizona",
+    "new jersey", "michigan", "ohio", "minnesota", "indiana",
+}
+
+# If ANY of these appear in the location string, reject the role outright.
+NON_US_TERMS = {
+    "canada", "toronto", "vancouver", "montreal", "ottawa",
+    "united kingdom", "uk", "england", "london", "manchester", "edinburgh",
+    "ireland", "dublin",
+    "germany", "berlin", "munich", "hamburg",
+    "france", "paris",
+    "netherlands", "amsterdam",
+    "sweden", "stockholm",
+    "india", "bangalore", "bengaluru", "hyderabad", "mumbai", "delhi", "pune",
+    "singapore",
+    "australia", "sydney", "melbourne",
+    "japan", "tokyo",
+    "china", "beijing", "shanghai",
+    "brazil", "são paulo",
+    "mexico", "mexico city",
+    "israel", "tel aviv",
+    "switzerland", "zurich",
+    "spain", "madrid", "barcelona",
+    "poland", "warsaw",
+    "czech", "prague",
+}
 
 
 # =============================================================================
@@ -463,9 +534,53 @@ def send_email(jobs: list) -> None:
 # =============================================================================
 
 def _title_is_relevant(title: str) -> bool:
-    """Returns True if the job title contains any ATS keyword."""
-    title_lower = title.lower()
-    return any(kw in title_lower for kw in ATS_TITLE_KEYWORDS)
+    """
+    Returns True only if the title satisfies BOTH conditions:
+      1. Contains a domain keyword — confirming the role is in DS/ML/Quant/AI
+      2. Contains an intern marker — confirming it's an internship, not FTE
+
+    A title like "Machine Learning Intern" passes (domain ✓, intern ✓).
+    A title like "Marketing Intern" fails  (no domain ✗).
+    A title like "Machine Learning Engineer" fails (no intern marker ✗).
+    """
+    t = title.lower()
+    has_domain = any(kw in t for kw in ATS_DOMAIN_KEYWORDS)
+    has_intern = any(m in t for m in ATS_INTERN_MARKERS)
+    return has_domain and has_intern
+
+
+def _is_us_location(location: str) -> bool:
+    """
+    Returns True if the location string is consistent with a US-based role.
+
+    Logic (checked in order):
+      1. Blank / unknown → True  (US company; include and let the dashboard filter)
+      2. Contains a non-US term → False
+      3. Contains a US state abbreviation as a standalone token → True
+      4. Contains a US positive term → True
+      5. Default → True  (unknown format; err on the side of inclusion)
+    """
+    if not location or location.strip().lower() in ("unknown", "none", ""):
+        return True
+
+    loc = location.lower()
+
+    # Hard reject on any known non-US geography
+    if any(term in loc for term in NON_US_TERMS):
+        return False
+
+    # Accept on any US positive indicator
+    if any(term in loc for term in US_POSITIVE_TERMS):
+        return True
+
+    # Check for state abbreviations as standalone tokens
+    # e.g. "San Francisco, CA" → tokens include "CA"
+    tokens = {t.strip("(),. ").upper() for t in location.replace(",", " ").split()}
+    if tokens & US_STATE_ABBREVIATIONS:
+        return True
+
+    # Unknown format — include rather than over-filter
+    return True
 
 
 def scrape_greenhouse(timeout: int = 10) -> list:
@@ -507,6 +622,9 @@ def scrape_greenhouse(timeout: int = 10) -> list:
 
                 location = job.get("location", {})
                 loc_str = location.get("name", "Unknown") if isinstance(location, dict) else "Unknown"
+
+                if not _is_us_location(loc_str):
+                    continue
 
                 results.append({
                     "title":       title,
@@ -574,6 +692,9 @@ def scrape_lever(timeout: int = 10) -> list:
 
                 categories = job.get("categories", {})
                 loc_str = categories.get("location", "Unknown") if isinstance(categories, dict) else "Unknown"
+
+                if not _is_us_location(loc_str):
+                    continue
 
                 # Lever provides plain-text description inline — pass it through
                 # so Module 3 has text to extract from without a second fetch.
