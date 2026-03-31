@@ -2,18 +2,19 @@
 # enrichment.py — Module 3: AI Enrichment Pipeline
 # Called by the "Run Enrichment" button in app.py.
 #
-# Two Claude calls per job:
-#   Call 1 (Haiku)  — extract hiring manager name + title from JD
-#   Call 2 (Haiku)  — generate personalized email body, LinkedIn search
-#                      query, and LinkedIn referral message from JD + profile
-#
-# Then: domain resolution → Apollo → Hunter email waterfall.
-# All results written to enriched_jobs; pending_jobs.status → 'enriched'.
+# Pipeline per job:
+#   Call 1 (Haiku)  — extract team signals + Google search queries from JD
+#   Google search   — find hiring manager LinkedIn profile via site: operator
+#   Claude parse    — extract manager name + title from search snippets
+#   Call 2 (Haiku)  — generate personalized email, LinkedIn alumni query,
+#                      and LinkedIn referral message
+#   Apollo → Hunter — email waterfall using the found name
 # =============================================================================
 
 import os
 import re
 import json
+import time
 import requests
 import streamlit as st
 
@@ -301,48 +302,227 @@ def resolve_domain(company_name: str) -> str | None:
 
 
 # =============================================================================
-# CLAUDE CALL 1 — HIRING MANAGER EXTRACTION
+# CLAUDE CALL 1 — JD SIGNAL EXTRACTION
 # =============================================================================
+# Instead of looking for a manager name inside the JD (rarely present),
+# Claude reads the JD and extracts structured signals that let us search for
+# the right person on LinkedIn: team name, function, and a ranked list of
+# likely manager titles. This feeds the web search step below.
 
-def extract_hiring_manager(description: str, company: str, title: str) -> dict:
+def extract_jd_signals(description: str, company: str, title: str) -> dict:
     """
-    Extracts the hiring manager's name and title from the JD.
-    Returns {"hiring_manager_name": str|None, "manager_title": str|None}.
-    Null-first — never guesses.
+    Reads the job description and extracts searchable signals about the team
+    and the likely hiring manager's title/function.
+
+    Returns:
+    {
+      "team_name":       str | None,   # e.g. "ML Platform", "Core AI"
+      "team_function":   str | None,   # e.g. "builds ML infrastructure"
+      "manager_titles":  list[str],    # ordered by likelihood, e.g.
+                                       # ["Head of ML Engineering",
+                                       #  "ML Engineering Manager",
+                                       #  "Director of AI"]
+      "search_queries":  list[str],    # 3 ready-to-use Google search strings,
+                                       # most specific first
+    }
     """
     client = _get_anthropic()
 
-    system = """You are a precise information extraction assistant.
-Extract the hiring manager's name and title from the provided job description.
+    system = """You are a recruiting intelligence assistant.
+Your job is to read a job description and extract structured signals that can
+be used to search LinkedIn for the hiring manager.
 
 STRICT RULES:
 - Respond ONLY with valid JSON. No markdown, no explanation, no preamble.
-- Only extract a SPECIFIC NAMED PERSON — not "our team" or "the hiring manager".
-- The target is typically a team lead, engineering manager, or department head.
-- If no specific named person is present with high confidence, return null for both fields.
-- Valid:   {"hiring_manager_name": "Jane Smith", "manager_title": "Head of ML Engineering"}
-- No name: {"hiring_manager_name": null, "manager_title": null}"""
+- manager_titles: list of 3 plausible titles for the person who would hire
+  for this role, ordered most-specific first. Infer from the team description,
+  tech stack, and seniority signals in the JD.
+- search_queries: list of exactly 3 Google search strings to find that person
+  on LinkedIn. Format each as:
+    site:linkedin.com/in "[Company]" "[Title]"
+  Vary the title across the three queries using manager_titles.
+- If the JD mentions a team name, include it.
+- team_function: one sentence describing what this team builds/does.
+
+Example output:
+{
+  "team_name": "ML Platform",
+  "team_function": "builds internal ML infrastructure and tooling for model training",
+  "manager_titles": ["Head of ML Platform", "ML Engineering Manager", "Director of ML Infrastructure"],
+  "search_queries": [
+    "site:linkedin.com/in \"Stripe\" \"Head of ML Platform\"",
+    "site:linkedin.com/in \"Stripe\" \"ML Engineering Manager\"",
+    "site:linkedin.com/in \"Stripe\" \"Director of Machine Learning\""
+  ]
+}"""
 
     user = f"""Company: {company}
 Role: {title}
 
 Job Description:
-{description[:3000]}
+{description[:3500]}
 
-Return only JSON."""
+Extract the signals. Return only JSON."""
 
     try:
         resp = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=150,
+            max_tokens=400,
             system=system,
             messages=[{"role": "user", "content": user}],
         )
         raw = resp.content[0].text.strip()
         raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
-        return json.loads(raw)
-    except (json.JSONDecodeError, Exception):
-        return {"hiring_manager_name": None, "manager_title": None}
+        result = json.loads(raw)
+        # Guarantee the keys exist
+        result.setdefault("team_name", None)
+        result.setdefault("team_function", None)
+        result.setdefault("manager_titles", [])
+        result.setdefault("search_queries", [])
+        return result
+    except (json.JSONDecodeError, Exception) as e:
+        st.warning(f"⚠️ JD signal extraction failed for {company}: {e}")
+        return {
+            "team_name":      None,
+            "team_function":  None,
+            "manager_titles": [],
+            "search_queries": [],
+        }
+
+
+# =============================================================================
+# WEB SEARCH — FIND HIRING MANAGER VIA GOOGLE
+# =============================================================================
+# Uses Google's public search to find LinkedIn profiles matching the extracted
+# title/company signals. No API key needed. Parses result snippets to extract
+# a candidate name. Rate-limited by design — only called on-demand, 3-5 times
+# per enrichment session, well within safe limits.
+
+def _google_search_snippets(query: str, timeout: int = 8) -> list[str]:
+    """
+    Executes a Google search and returns a list of result snippet strings.
+    Uses a browser-like User-Agent to avoid immediate bot detection.
+    Returns up to 5 snippets, or an empty list on any failure.
+    """
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    try:
+        resp = requests.get(
+            "https://www.google.com/search",
+            params={"q": query, "num": 5, "hl": "en"},
+            headers=headers,
+            timeout=timeout,
+        )
+        if resp.status_code != 200:
+            return []
+
+        # Extract text from <span> and <div> tags that hold snippet content.
+        # We use simple regex rather than a full HTML parser to avoid adding
+        # a beautifulsoup dependency.
+        text = resp.text
+
+        # Pull all visible text blocks between tags, strip HTML
+        raw_blocks = re.findall(r'<span[^>]*>(.*?)</span>', text, re.DOTALL)
+        raw_blocks += re.findall(r'<div[^>]*class="[^"]*BNeawe[^"]*"[^>]*>(.*?)</div>', text, re.DOTALL)
+
+        snippets = []
+        seen = set()
+        for block in raw_blocks:
+            # Strip remaining HTML tags
+            clean = re.sub(r'<[^>]+>', ' ', block).strip()
+            clean = re.sub(r'\s+', ' ', clean)
+            # Only keep blocks that look like person descriptions (contain name-like patterns)
+            if len(clean) > 20 and clean not in seen:
+                snippets.append(clean)
+                seen.add(clean)
+            if len(snippets) >= 8:
+                break
+
+        return snippets
+
+    except Exception:
+        return []
+
+
+def search_for_manager(
+    company:         str,
+    search_queries:  list[str],
+    manager_titles:  list[str],
+) -> dict:
+    """
+    Runs up to 3 Google searches using the Claude-generated queries.
+    Collects result snippets, then passes them to Claude to identify
+    the most likely hiring manager name and title.
+
+    Returns {"manager_name": str|None, "manager_title": str|None,
+             "search_source": str}  where search_source describes which
+    query produced the result.
+    """
+    client = _get_anthropic()
+
+    all_snippets = []
+    source_query = None
+
+    for i, query in enumerate(search_queries[:3]):
+        snippets = _google_search_snippets(query)
+        if snippets:
+            all_snippets.extend(snippets)
+            if source_query is None:
+                source_query = query
+        # Small polite delay between searches
+        if i < len(search_queries) - 1:
+            time.sleep(1.5)
+
+    if not all_snippets:
+        return {"manager_name": None, "manager_title": None, "search_source": "no_results"}
+
+    # Ask Claude to identify the most likely real person from the snippets
+    system = """You are a name extraction assistant reading Google search result snippets.
+Your job is to identify the most likely hiring manager for the given role at the given company.
+
+STRICT RULES:
+- Respond ONLY with valid JSON. No markdown, no preamble.
+- Extract a REAL FULL NAME from the snippets — first and last name.
+- Only return a name if you are highly confident it belongs to a current employee
+  in a management/leadership role at this company.
+- Cross-reference: the name should appear in a snippet alongside the company name
+  and a title consistent with the expected manager_titles list.
+- If no credible match found, return null for both fields.
+- Format: {"manager_name": "Jane Smith", "manager_title": "Head of ML Engineering"}
+- No match:  {"manager_name": null, "manager_title": null}"""
+
+    user = f"""Company: {company}
+Expected manager title types: {', '.join(manager_titles[:3])}
+
+Google search result snippets:
+{chr(10).join(f'- {s}' for s in all_snippets[:12])}
+
+Identify the hiring manager. Return only JSON."""
+
+    try:
+        resp = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=120,
+            system=system,
+            messages=[{"role": "user", "content": user}],
+        )
+        raw = resp.content[0].text.strip()
+        raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
+        result = json.loads(raw)
+        return {
+            "manager_name":   result.get("manager_name"),
+            "manager_title":  result.get("manager_title"),
+            "search_source":  source_query or "google",
+        }
+    except (json.JSONDecodeError, Exception) as e:
+        st.warning(f"⚠️ Manager name extraction from search failed: {e}")
+        return {"manager_name": None, "manager_title": None, "search_source": "parse_error"}
 
 
 # =============================================================================
@@ -383,32 +563,20 @@ def _build_profile_summary() -> str:
 
 
 def generate_personalized_outreach(
-    description:  str,
-    company:      str,
-    title:        str,
-    manager_name: str | None,
+    description:   str,
+    company:       str,
+    title:         str,
+    manager_name:  str | None,
+    team_name:     str | None = None,
+    team_function: str | None = None,
 ) -> dict:
     """
-    Second Claude call. Reads the full JD alongside the candidate's background
-    profile and generates three things:
+    Generates three outreach pieces using the JD, the candidate profile,
+    and team context extracted in Call 1.
 
-    personalized_email_body
-        3–4 paragraph cold email body. References specific elements from the JD
-        (tech stack, team mission, a stated problem they're solving) and maps
-        them to concrete items from the candidate's background. Not a template.
-
-    linkedin_search_query
-        Ready-to-paste LinkedIn search string to find UNC Chapel Hill alumni
-        currently working at this company in relevant roles.
-        Format: '[University] [Company] [role keywords]'
-
-    linkedin_message
-        ≤200-char LinkedIn connection note for a referral ask. Leads with
-        shared school, names the specific role, lands one concrete credential
-        hook that maps to what the company does, ends with a single low-friction
-        ask. Never generic.
-
-    Returns a dict with those three keys; all default to None on failure.
+    personalized_email_body — role-specific cold email body
+    linkedin_search_query   — alumni search string for UNC referral
+    linkedin_message        — ≤280-char LinkedIn connection note
     """
     client  = _get_anthropic()
     profile = _build_profile_summary()
@@ -416,8 +584,11 @@ def generate_personalized_outreach(
     manager_line = (
         f"The hiring manager is {manager_name}."
         if manager_name
-        else "The hiring manager's name is unknown."
+        else "The hiring manager's name is unknown — address the email to the team."
     )
+    team_context = ""
+    if team_name or team_function:
+        team_context = f"\nTeam context: {team_name or ''} — {team_function or ''}".strip(" —")
 
     system = """You are an expert career coach who writes cold outreach that
 actually gets responses. Your emails and LinkedIn messages are specific,
@@ -429,12 +600,12 @@ connecting a concrete candidate achievement to a concrete company need.
 Respond ONLY with a valid JSON object containing exactly these three keys:
   personalized_email_body  — string (email body only, no salutation or sign-off)
   linkedin_search_query    — string
-  linkedin_message         — string (≤200 chars)
+  linkedin_message         — string (≤280 chars)
 
 No markdown. No explanation. No preamble. Only the JSON object."""
 
     user = f"""ROLE: {title} at {company}
-{manager_line}
+{manager_line}{team_context}
 
 JOB DESCRIPTION (read carefully — pull specific details from this):
 {description[:4000]}
@@ -461,12 +632,12 @@ LINKEDIN SEARCH QUERY:
 - Example: "UNC Chapel Hill Stripe data science machine learning"
 - Will be pasted directly into LinkedIn search to find alumni at this company.
 
-LINKEDIN MESSAGE (HARD LIMIT: ≤200 characters — count carefully):
+LINKEDIN MESSAGE (HARD LIMIT: ≤280 characters — count carefully):
 - Start with: "Fellow Tar Heel here —"
 - Name the specific role you're applying to.
 - ONE concrete credential hook tied to what this company does.
 - End with: "Would you be open to a quick chat?"
-- No company praise. No generic enthusiasm. ≤200 chars, non-negotiable."""
+- No company praise. No generic enthusiasm. ≤280 chars, non-negotiable."""
 
     try:
         resp = client.messages.create(
@@ -479,7 +650,6 @@ LINKEDIN MESSAGE (HARD LIMIT: ≤200 characters — count carefully):
         raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
         result = json.loads(raw)
 
-        # Hard-enforce LinkedIn character limit
         li_msg = result.get("linkedin_message") or ""
         if len(li_msg) > 280:
             li_msg = li_msg[:277] + "..."
@@ -499,43 +669,6 @@ LINKEDIN MESSAGE (HARD LIMIT: ≤200 characters — count carefully):
             "linkedin_message":        None,
         }
 
-
-# =============================================================================
-# MAILTO BUILDER
-# =============================================================================
-
-def build_mailto(
-    email:        str,
-    manager_name: str | None,
-    company:      str,
-    title:        str,
-    email_body:   str | None = None,
-) -> str:
-    """
-    Builds a mailto: URI. Uses the Claude-generated body if available;
-    falls back to a minimal generic body if generation failed.
-    """
-    first   = (manager_name or "").split()[0] if manager_name else "there"
-    subject = quote(f"Application: {title} — Summer 2026")
-
-    if email_body:
-        full_body = (
-            f"Hi {first},\n\n"
-            f"{email_body.strip()}\n\n"
-            f"Best,\n{CANDIDATE_PROFILE['name']}"
-        )
-    else:
-        full_body = (
-            f"Hi {first},\n\n"
-            f"I'm a {CANDIDATE_PROFILE['year']} at {CANDIDATE_PROFILE['university']} "
-            f"studying {CANDIDATE_PROFILE['major']} and I'm very interested in the "
-            f"{title} role at {company}. I have relevant experience from my time at "
-            f"American Express and a strong background in ML.\n\n"
-            f"I've attached my resume — would you have 15 minutes to connect?\n\n"
-            f"Best,\n{CANDIDATE_PROFILE['name']}"
-        )
-
-    return f"mailto:{email}?subject={subject}&body={quote(full_body)}"
 
 
 # =============================================================================
@@ -601,34 +734,47 @@ def lookup_hunter(first: str, last: str, domain: str) -> dict | None:
 def run_enrichment(job: dict) -> dict:
     """
     Full pipeline for one job:
-      1. Claude Call 1 — extract hiring manager name + title
-      2. Claude Call 2 — generate personalized email body, LinkedIn search
-                         query, and LinkedIn referral message
-      3. Resolve company domain
-      4. Apollo → Hunter email waterfall
-      5. Build mailto with personalized body
-      6. Write to enriched_jobs; update pending_jobs.status → 'enriched'
+      1. Claude Call 1 — extract team signals + Google search queries from JD
+      2. Google search — find hiring manager LinkedIn profile via site: operator
+      3. Claude parse  — extract manager name + title from search snippets
+      4. Claude Call 2 — generate personalized email body, LinkedIn alumni
+                         search query, and LinkedIn referral message
+      5. Domain resolution
+      6. Apollo → Hunter email waterfall using the found name
+      7. Build mailto with personalized body
+      8. Write to enriched_jobs; update pending_jobs.status → 'enriched'
     """
     job_id      = job["id"]
     company     = job.get("company", "")
     title       = job.get("title", "")
     description = job.get("description", "")
 
-    # Call 1: Hiring manager
-    extracted     = extract_hiring_manager(description, company, title)
-    manager_name  = extracted.get("hiring_manager_name")
-    manager_title = extracted.get("manager_title")
+    # ── Step 1: Extract JD signals + search queries ───────────────────────────
+    signals       = extract_jd_signals(description, company, title)
+    team_name     = signals.get("team_name")
+    team_function = signals.get("team_function")
+    search_queries = signals.get("search_queries", [])
+    manager_titles = signals.get("manager_titles", [])
 
-    # Call 2: Personalized outreach — runs regardless of manager found/not
-    outreach          = generate_personalized_outreach(description, company, title, manager_name)
-    email_body        = outreach.get("personalized_email_body")
-    linkedin_search   = outreach.get("linkedin_search_query")
-    linkedin_message  = outreach.get("linkedin_message")
+    # ── Step 2+3: Search Google → parse manager name ─────────────────────────
+    found         = search_for_manager(company, search_queries, manager_titles)
+    manager_name  = found.get("manager_name")
+    manager_title = found.get("manager_title")
+    search_source = found.get("search_source", "")
 
-    # Domain
+    # ── Step 4: Personalized outreach (always runs, richer with team context) ─
+    outreach         = generate_personalized_outreach(
+        description, company, title, manager_name,
+        team_name=team_name, team_function=team_function,
+    )
+    email_body       = outreach.get("personalized_email_body")
+    linkedin_search  = outreach.get("linkedin_search_query")
+    linkedin_message = outreach.get("linkedin_message")
+
+    # ── Step 5: Domain resolution ─────────────────────────────────────────────
     domain = resolve_domain(company)
 
-    # Email waterfall
+    # ── Step 6: Email waterfall ───────────────────────────────────────────────
     email_result = None
     if manager_name and domain:
         parts = manager_name.strip().split()
@@ -640,14 +786,14 @@ def run_enrichment(job: dict) -> dict:
             if hunter and (not email_result or hunter["confidence"] > email_result["confidence"]):
                 email_result = hunter
 
-    # Mailto
+    # ── Step 7: Build mailto ──────────────────────────────────────────────────
     mailto = None
     if email_result and email_result.get("email"):
         mailto = build_mailto(
             email_result["email"], manager_name, company, title, email_body=email_body
         )
 
-    # Status
+    # ── Step 8: Status + persist ──────────────────────────────────────────────
     if email_result and email_result.get("email"):
         extraction_status = "success"
     elif manager_name:
@@ -655,7 +801,6 @@ def run_enrichment(job: dict) -> dict:
     else:
         extraction_status = "no_manager_found"
 
-    # Persist
     record = {
         "pending_job_id":          job_id,
         "manager_name":            manager_name,
@@ -669,6 +814,8 @@ def run_enrichment(job: dict) -> dict:
         "personalized_email_body": email_body,
         "linkedin_search_query":   linkedin_search,
         "linkedin_message":        linkedin_message,
+        "linkedin_search_queries": search_queries,   # store all 3 queries for debugging
+        "manager_search_source":   search_source,    # which query produced the result
     }
 
     db = get_client()
