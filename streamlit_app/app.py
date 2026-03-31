@@ -458,38 +458,39 @@ with tab1:
         )
 
         for job in enriched:
-            company    = job.get("company", "Unknown")
-            title      = job.get("title", "Unknown")
-            location   = job.get("location", "")
+            company     = job.get("company", "Unknown")
+            title       = job.get("title", "Unknown")
+            location    = job.get("location", "")
             is_priority = job.get("is_priority", False)
-            source     = job.get("source", "scraper")
+            source      = job.get("source", "scraper")
 
             # Pull enrichment record (Supabase returns it as a list)
             enrichment_list = job.get("enriched_jobs") or []
             e = enrichment_list[0] if enrichment_list else {}
 
-            manager_name   = e.get("manager_name")
-            manager_title  = e.get("manager_title")
-            manager_email  = e.get("manager_email")
-            confidence     = e.get("email_confidence") or 0
-            email_source   = e.get("email_source", "")
-            mailto         = e.get("mailto_link")
-            extr_status    = e.get("extraction_status", "no_manager_found")
+            manager_name    = e.get("manager_name")
+            manager_title   = e.get("manager_title")
+            manager_email   = e.get("manager_email")
+            confidence      = e.get("email_confidence") or 0
+            email_source    = e.get("email_source", "")
+            mailto          = e.get("mailto_link")
+            extr_status     = e.get("extraction_status", "no_manager_found")
+            email_body      = e.get("personalized_email_body")
+            li_search       = e.get("linkedin_search_query")
+            li_message      = e.get("linkedin_message")
 
             priority_class = "priority" if is_priority else ""
-            source_badge   = "manual" if source == "manual" else ""
             priority_badge = '<span class="badge priority">⭐ Priority</span> ' if is_priority else ""
             manual_badge   = '<span class="badge manual">Manual</span> ' if source == "manual" else ""
 
-            # Confidence color
             if confidence >= 70:
-                conf_class, conf_icon = "confidence-high", "●"
+                conf_icon = "●"; conf_cls = "confidence-high"
             elif confidence >= 40:
-                conf_class, conf_icon = "confidence-mid", "●"
+                conf_icon = "●"; conf_cls = "confidence-mid"
             else:
-                conf_class, conf_icon = "confidence-low", "●"
+                conf_icon = "●"; conf_cls = "confidence-low"
 
-            # Build card HTML
+            # ── Top info card ─────────────────────────────────────────────────
             card_html = f"""
 <div class="result-card {priority_class}">
   <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -498,7 +499,7 @@ with tab1:
       <div class="result-title">{title}</div>
       <div class="result-location">{location}</div>
     </div>
-    <div style="text-align:right; min-width:200px;">"""
+    <div style="text-align:right; min-width:220px;">"""
 
             if manager_name:
                 card_html += f"""
@@ -509,20 +510,18 @@ with tab1:
                 card_html += f"""
       <div style="margin-top:0.35rem;">
         <div class="email-text">{manager_email}</div>
-        <div class="{'confidence-high' if confidence >= 70 else 'confidence-mid' if confidence >= 40 else 'confidence-low'}">
-          {conf_icon} {confidence}% confidence · {email_source}
-        </div>
+        <div class="{conf_cls}">{conf_icon} {confidence}% confidence · {email_source}</div>
       </div>"""
             elif extr_status == "no_email_found":
-                card_html += '<div class="no-contact" style="margin-top:0.35rem;">Manager found — no email</div>'
+                card_html += '<div class="no-contact" style="margin-top:0.35rem;">Manager found — no email located</div>'
             else:
-                card_html += '<div class="no-contact" style="margin-top:0.35rem;">No hiring manager found</div>'
+                card_html += '<div class="no-contact" style="margin-top:0.35rem;">No hiring manager found in JD</div>'
 
             card_html += "</div></div></div>"
             st.markdown(card_html, unsafe_allow_html=True)
 
-            # Action buttons beneath the card
-            btn1, btn2, btn3 = st.columns([2, 2, 6])
+            # ── Action buttons ────────────────────────────────────────────────
+            btn1, btn2, btn3, btn4 = st.columns([2, 2, 2, 2])
             with btn1:
                 if mailto:
                     st.link_button("✉️ Open in Mail", mailto, use_container_width=True)
@@ -537,10 +536,103 @@ with tab1:
                     st.toast(f"Marked {company} as contacted.", icon="✅")
                     st.rerun()
             with btn3:
-                if st.button("❌ Reject", key=f"reject_{job['id']}"):
+                if st.button("❌ Reject", key=f"reject_{job['id']}", use_container_width=True):
                     mark_rejected(job["id"])
                     st.toast(f"Rejected {company} — {title}.", icon="🗑️")
                     st.rerun()
+            with btn4:
+                if st.button("🔄 Re-enrich", key=f"reenrich_{job['id']}", use_container_width=True,
+                             help="Delete stale enrichment data and re-run the full pipeline"):
+                    from db import get_client as _gc
+                    # Delete old enriched_jobs rows for this job
+                    _gc().table("enriched_jobs").delete().eq("pending_job_id", job["id"]).execute()
+                    # Reset status so it re-enters the pipeline
+                    _gc().table("pending_jobs").update(
+                        {"status": "pending", "is_targeted": False}
+                    ).eq("id", job["id"]).execute()
+                    st.toast(f"Reset {company} — check the box in the hopper to re-enrich.", icon="🔄")
+                    st.rerun()
+
+            # ── Outreach detail expanders ─────────────────────────────────────
+            exp_col1, exp_col2 = st.columns(2)
+
+            # Left: personalized email preview
+            with exp_col1:
+                with st.expander("📝 Email preview", expanded=False):
+                    if email_body:
+                        manager_first = (manager_name or "").split()[0] if manager_name else "there"
+                        full_preview = (
+                            f"**Hi {manager_first},**\n\n"
+                            f"{email_body.strip()}\n\n"
+                            f"**Best,**  \n**Rish**"
+                        )
+                        st.markdown(
+                            f'<div style="font-size:0.82rem; color:#cbd5e1; '
+                            f'line-height:1.7; white-space:pre-wrap;">'
+                            f'{email_body.strip()}</div>',
+                            unsafe_allow_html=True,
+                        )
+                        st.caption(
+                            "Salutation and sign-off are added automatically when you "
+                            "click Open in Mail."
+                        )
+                    else:
+                        st.caption("Email body generation failed — fallback body used.")
+
+            # Right: LinkedIn referral workflow
+            with exp_col2:
+                with st.expander("🔗 LinkedIn referral", expanded=False):
+                    st.markdown(
+                        '<div class="section-label" style="margin-bottom:0.5rem;">'
+                        'Step 1 — Find a UNC alum at this company</div>',
+                        unsafe_allow_html=True,
+                    )
+                    if li_search:
+                        li_url = (
+                            "https://www.linkedin.com/search/results/people/?"
+                            f"keywords={li_search.replace(' ', '%20')}"
+                            "&origin=GLOBAL_SEARCH_HEADER"
+                        )
+                        st.link_button(
+                            "🔍 Search LinkedIn for UNC alumni",
+                            li_url,
+                            use_container_width=True,
+                        )
+                        st.markdown(
+                            f'<div style="font-family:\'IBM Plex Mono\',monospace; '
+                            f'font-size:0.7rem; color:#475569; margin-top:0.35rem;">'
+                            f'{li_search}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.caption("No LinkedIn search query generated.")
+
+                    st.markdown(
+                        '<div class="section-label" style="margin:0.75rem 0 0.5rem;">'
+                        'Step 2 — Send this connection note</div>',
+                        unsafe_allow_html=True,
+                    )
+                    if li_message:
+                        char_count = len(li_message)
+                        count_color = "#10b981" if char_count <= 280 else "#ef4444"
+                        st.markdown(
+                            f'<div style="background:#0d1321; border:1px solid #1e2d40; '
+                            f'border-radius:6px; padding:0.75rem 1rem; '
+                            f'font-size:0.82rem; color:#e2e8f0; line-height:1.6;">'
+                            f'{li_message}</div>'
+                            f'<div style="font-family:\'IBM Plex Mono\',monospace; '
+                            f'font-size:0.65rem; color:{count_color}; '
+                            f'text-align:right; margin-top:0.25rem;">'
+                            f'{char_count}/280 chars</div>',
+                            unsafe_allow_html=True,
+                        )
+                        # Copy-to-clipboard via a selectbox workaround
+                        st.code(li_message, language=None)
+                        st.caption("Select all and copy the text above to paste into LinkedIn.")
+                    else:
+                        st.caption("LinkedIn message generation failed.")
+
+            st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

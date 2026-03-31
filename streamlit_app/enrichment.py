@@ -819,6 +819,9 @@ def run_enrichment(job: dict) -> dict:
     }
 
     db = get_client()
+    # Delete any stale enrichment row before inserting the fresh one.
+    # This makes re-enrichment safe — no duplicate rows, no stale data shown.
+    db.table("enriched_jobs").delete().eq("pending_job_id", job_id).execute()
     db.table("enriched_jobs").insert(record).execute()
     db.table("pending_jobs").update({"status": "enriched"}).eq("id", job_id).execute()
 
