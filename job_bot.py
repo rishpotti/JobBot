@@ -448,7 +448,7 @@ def send_email(jobs: list) -> None:
     # FIX: Receiver email is now pulled from an environment secret instead of
     # being hardcoded. Falls back to the original address so existing runs
     # don't break if the secret hasn't been added yet.
-    receiver_email  = os.environ.get("EMAIL_RECEIVER", "rishpotti@gmail.com")
+    receiver_email  = os.environ.get("EMAIL_RECEIVER")
 
     if not sender_email or not sender_password:
         print("❌ EMAIL_USER or EMAIL_PASS not set — skipping email.", flush=True)
