@@ -354,14 +354,10 @@ def extract_jd_signals(description: str, company: str, title: str) -> dict:
 
     Returns:
     {
-      "team_name":       str | None,   # e.g. "ML Platform", "Core AI"
-      "team_function":   str | None,   # e.g. "builds ML infrastructure"
-      "manager_titles":  list[str],    # ordered by likelihood, e.g.
-                                       # ["Head of ML Engineering",
-                                       #  "ML Engineering Manager",
-                                       #  "Director of AI"]
-      "search_queries":  list[str],    # 3 ready-to-use Google search strings,
-                                       # most specific first
+      "team_name":       str | None,
+      "team_function":   str | None,
+      "manager_titles":  list[str],
+      "search_queries":  list[str],   # 5 queries, most specific → broadest
     }
     """
     client = _get_anthropic()
@@ -375,22 +371,29 @@ STRICT RULES:
 - manager_titles: list of 3 plausible titles for the person who would hire
   for this role, ordered most-specific first. Infer from the team description,
   tech stack, and seniority signals in the JD.
-- search_queries: list of exactly 3 Google search strings to find that person
-  on LinkedIn. Format each as:
-    site:linkedin.com/in "[Company]" "[Title]"
-  Vary the title across the three queries using manager_titles.
+- search_queries: list of exactly 5 Google search strings, ordered from most
+  specific to broadest. Use these formats in order:
+    Query 1: site:linkedin.com/in "[Company]" "[Most specific manager title]"
+    Query 2: site:linkedin.com/in "[Company]" "[Second manager title]"
+    Query 3: site:linkedin.com/in "[Company]" "[Broader department title, e.g. Director of Engineering]"
+    Query 4: site:linkedin.com/in "[Company]" "[Team keyword from JD, e.g. 'machine learning' OR 'AI']" "manager"
+    Query 5: "[Company]" "[team function keyword]" "hiring manager" intern 2026 site:linkedin.com
+  The final two queries are intentionally broader to cast a wider net when
+  exact title searches return no results.
 - If the JD mentions a team name, include it.
 - team_function: one sentence describing what this team builds/does.
 
-Example output:
+Example output for an ML infra role at Stripe:
 {
   "team_name": "ML Platform",
   "team_function": "builds internal ML infrastructure and tooling for model training",
   "manager_titles": ["Head of ML Platform", "ML Engineering Manager", "Director of ML Infrastructure"],
   "search_queries": [
-    "site:linkedin.com/in \"Stripe\" \"Head of ML Platform\"",
-    "site:linkedin.com/in \"Stripe\" \"ML Engineering Manager\"",
-    "site:linkedin.com/in \"Stripe\" \"Director of Machine Learning\""
+    "site:linkedin.com/in \\"Stripe\\" \\"Head of ML Platform\\"",
+    "site:linkedin.com/in \\"Stripe\\" \\"ML Engineering Manager\\"",
+    "site:linkedin.com/in \\"Stripe\\" \\"Director of Machine Learning\\"",
+    "site:linkedin.com/in \\"Stripe\\" \\"machine learning\\" \\"manager\\"",
+    "\\"Stripe\\" \\"ML Platform\\" \\"hiring manager\\" intern 2026 site:linkedin.com"
   ]
 }"""
 
@@ -405,14 +408,13 @@ Extract the signals. Return only JSON."""
     try:
         resp = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=400,
+            max_tokens=500,
             system=system,
             messages=[{"role": "user", "content": user}],
         )
         raw = resp.content[0].text.strip()
         raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
         result = json.loads(raw)
-        # Guarantee the keys exist
         result.setdefault("team_name", None)
         result.setdefault("team_function", None)
         result.setdefault("manager_titles", [])
@@ -530,15 +532,18 @@ def search_for_manager(
     all_snippets = []
     source_query = None
 
-    for i, query in enumerate(search_queries[:3]):
+    # Run all queries (up to 5). Always run all of them — broader queries
+    # at the end of the list often surface names that specific title searches miss.
+    # Stop early only if we've already accumulated 10+ snippets with a name signal.
+    for i, query in enumerate(search_queries[:5]):
         snippets = _search_snippets(query)
         if snippets:
             all_snippets.extend(snippets)
             if source_query is None:
                 source_query = query
-        # Small polite delay between searches
+        # Polite delay between requests
         if i < len(search_queries) - 1:
-            time.sleep(1.5)
+            time.sleep(1.2)
 
     if not all_snippets:
         return {"manager_name": None, "manager_title": None, "search_source": "no_results"}
