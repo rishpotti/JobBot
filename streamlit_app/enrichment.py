@@ -161,7 +161,7 @@ CANDIDATE_PROFILE = {
     # Ordered to match the most comprehensive resume variant (honeywell_resume).
     "skills": [
         # Languages
-        "Python", "SQL", "Bash",
+        "Python", "SQL", "C++", "Bash",
         # ML & Deep Learning
         "TensorFlow", "PyTorch", "Scikit-learn", "CNNs", "LSTMs",
         "Transformers", "NLP", "computer vision", "signal processing",
@@ -747,12 +747,22 @@ def lookup_apollo(first: str, last: str, domain: str) -> dict | None:
         return None
     STATUS_CONFIDENCE = {"verified": 90, "likely": 70, "guessed": 40}
     try:
+        # Apollo v1 people/match — key goes in the JSON body, not just headers
         resp = requests.post(
             "https://api.apollo.io/v1/people/match",
-            headers={"x-api-key": api_key, "Content-Type": "application/json"},
-            json={"first_name": first, "last_name": last, "domain": domain},
+            headers={"Content-Type": "application/json", "Cache-Control": "no-cache"},
+            json={
+                "api_key":    api_key,
+                "first_name": first,
+                "last_name":  last,
+                "domain":     domain,
+                "reveal_personal_emails": False,
+            },
             timeout=10,
         )
+        if resp.status_code == 403:
+            st.warning("⚠️ Apollo 403 — check your API key in Streamlit secrets and that your account has credits.")
+            return None
         resp.raise_for_status()
         person = resp.json().get("person") or {}
         email  = person.get("email", "")
@@ -791,6 +801,47 @@ def lookup_hunter(first: str, last: str, domain: str) -> dict | None:
     except Exception as e:
         st.warning(f"⚠️ Hunter error: {e}")
     return None
+
+
+# =============================================================================
+# MAILTO BUILDER
+# =============================================================================
+
+def build_mailto(
+    email:        str,
+    manager_name: str | None,
+    company:      str,
+    title:        str,
+    email_body:   str | None = None,
+) -> str:
+    """
+    Builds a mailto: URI with pre-filled subject and body.
+    Uses the Claude-generated personalized body if available;
+    falls back to a minimal generic body if generation failed.
+    Clicking the link opens the user's default email client ready to send.
+    """
+    first   = (manager_name or "").split()[0] if manager_name else "there"
+    subject = quote(f"Application: {title} — Summer 2026")
+
+    name = CANDIDATE_PROFILE.get("name", "Rish Potti")
+
+    if email_body:
+        full_body = f"Hi {first},\n\n{email_body.strip()}\n\nBest,\n{name}"
+    else:
+        year  = CANDIDATE_PROFILE.get("year", "MS CS student")
+        uni   = CANDIDATE_PROFILE.get("university", "UNC Chapel Hill")
+        major = CANDIDATE_PROFILE.get("major", "Computer Science")
+        full_body = (
+            f"Hi {first},\n\n"
+            f"I'm a {year} at {uni} studying {major} and am very interested "
+            f"in the {title} role at {company}. I have relevant experience "
+            f"building LLM-powered agentic systems at Kinetik and production ML "
+            f"pipelines at American Express.\n\n"
+            f"I've attached my resume — would you have 15 minutes to connect?\n\n"
+            f"Best,\n{name}"
+        )
+
+    return f"mailto:{email}?subject={subject}&body={quote(full_body)}"
 
 
 # =============================================================================
