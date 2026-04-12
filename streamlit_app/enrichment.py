@@ -448,6 +448,7 @@ def _serper_search_snippets(query: str, timeout: int = 8) -> list[str]:
     """
     api_key = st.secrets.get("SERPER_API_KEY") or os.environ.get("SERPER_API_KEY")
     if not api_key:
+        st.warning("⚠️ Serper: SERPER_API_KEY not found in secrets.")
         return []
 
     try:
@@ -458,6 +459,7 @@ def _serper_search_snippets(query: str, timeout: int = 8) -> list[str]:
             timeout=timeout,
         )
         if resp.status_code != 200:
+            st.warning(f"⚠️ Serper HTTP {resp.status_code}: {resp.text[:200]}")
             return []
 
         data     = resp.json()
@@ -493,12 +495,14 @@ def _serper_search_snippets(query: str, timeout: int = 8) -> list[str]:
 def _search_snippets(query: str, timeout: int = 8) -> list[str]:
     """
     Unified search entry point. Uses Serper if the API key is configured,
-    otherwise logs a warning and returns empty — no silent fallback to raw
-    Google scraping since that is reliably blocked on cloud deployments.
+    otherwise warns and returns empty.
     """
     api_key = st.secrets.get("SERPER_API_KEY") or os.environ.get("SERPER_API_KEY")
     if api_key:
-        return _serper_search_snippets(query, timeout=timeout)
+        result = _serper_search_snippets(query, timeout=timeout)
+        # Surface result count so debug output is meaningful
+        st.caption(f"🔍 Serper query: `{query[:80]}` → {len(result)} snippets")
+        return result
 
     st.warning(
         "⚠️ SERPER_API_KEY not set — manager search skipped. "
@@ -872,9 +876,6 @@ def run_enrichment(job: dict) -> dict:
     team_function = signals.get("team_function")
     search_queries = signals.get("search_queries", [])
     manager_titles = signals.get("manager_titles", [])
-    # DEBUG — remove after confirming
-    st.write("Search queries:", search_queries)
-    st.write("Raw snippets:", _search_snippets(search_queries[0]) if search_queries else "no queries")
 
     # ── Step 2+3: Search Google → parse manager name ─────────────────────────
     found         = search_for_manager(company, search_queries, manager_titles)
