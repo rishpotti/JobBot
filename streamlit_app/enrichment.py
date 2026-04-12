@@ -872,6 +872,9 @@ def run_enrichment(job: dict) -> dict:
     team_function = signals.get("team_function")
     search_queries = signals.get("search_queries", [])
     manager_titles = signals.get("manager_titles", [])
+    # DEBUG — remove after confirming
+    st.write("Search queries:", search_queries)
+    st.write("Raw snippets:", _search_snippets(search_queries[0]) if search_queries else "no queries")
 
     # ── Step 2+3: Search Google → parse manager name ─────────────────────────
     found         = search_for_manager(company, search_queries, manager_titles)
