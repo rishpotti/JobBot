@@ -36,32 +36,64 @@ CANDIDATE_PROFILE = {
     "university": "UNC Chapel Hill",
     "year":       "first-year Master's student in Computer Science",
     "major":      "Computer Science (MS)",
+    "gpa":        "8.35/10 (3.6/4.0 equiv.) — B.Tech, NIT Rourkela",
 
-    # UG GPA included since MS GPA not yet established
-    "gpa": "8.35/10 (B.Tech, NIT Rourkela)",
+    # ── Summary / Value Proposition ───────────────────────────────────────────
+    # Used as the anchor sentence when Claude can't find a specific JD hook.
+    # Drawn directly from the resume summary — update if summary changes.
+    "value_prop": (
+        "AI/ML engineer with production experience building LLM-powered agentic "
+        "systems (LangChain, LangGraph), TensorFlow/PyTorch deep learning pipelines, "
+        "and end-to-end AWS-deployed data workflows — with a 91% accuracy change-failure "
+        "model shipped at American Express and a 50–60% throughput improvement at Kinetik."
+    ),
 
     # ── Work Experience ───────────────────────────────────────────────────────
+    # Listed most-recent first to match resume order.
     "experiences": [
         {
-            "company":    "American Express",
-            "role":       "Summer Data Science Intern",
+            "company":    "Kinetik",
+            "role":       "AI Engineer Intern",
+            "dates":      "Jan 2025 – Apr 2025",
             "highlights": [
-                "Performed EDA and preprocessing on incident data using Pandas and Seaborn, "
-                "identifying 8 concrete automation opportunities",
-                "Built TensorFlow classification models to predict the probability of change "
-                "failure, achieving 91% accuracy — integrated as a signal in SRE deployment gates",
-                "Engineered a Doc2Vec + Scikit-Learn retrieval system to surface relevant error "
-                "correction articles at incident time, reducing manual triage effort",
+                "Designed and deployed an end-to-end prospect intelligence pipeline on "
+                "AWS EC2 using the OpenAI API — integrating web scraping, data ingestion "
+                "from AWS S3, and LLM-based reasoning — reducing manual prospect research "
+                "time by 50–60%",
+                "Built a two-stage LangChain classification pipeline that ingests sales "
+                "and market signals, analyzes them week-by-week, and outputs buying stage, "
+                "confidence score, and explanation for downstream decision-making",
+                "Maintained cloud-deployed workflows via SSH remote access, iterating on "
+                "pipeline performance and collaborating with team leadership on results",
+            ],
+        },
+        {
+            "company":    "American Express",
+            "role":       "Machine Learning Intern – DevOps & Infrastructure Group",
+            "dates":      "May 2024 – Jul 2024",
+            "highlights": [
+                "Developed TensorFlow classification models to predict IT change failure "
+                "probability, achieving 91% accuracy across the full software development "
+                "lifecycle from requirements through testing",
+                "Designed ETL pipelines on IT incident data using Pandas and Seaborn, "
+                "performing exploratory data analysis to identify 8 process automation "
+                "opportunities",
+                "Built a semantic document retrieval system using Doc2Vec and Scikit-learn "
+                "to surface relevant technical articles from natural language queries, "
+                "reducing incident resolution time",
+                "Completed internal training on CI/CD pipelines and Docker containerization "
+                "within a highly regulated financial institution under strict compliance "
+                "and access control protocols",
             ],
         },
         {
             "company":    "Shopalyst",
-            "role":       "Summer Software Intern",
+            "role":       "Software Engineering Intern",
+            "dates":      "May 2023 – Jul 2023",
             "highlights": [
-                "Contributed to an automated ad creative generation pipeline",
-                "Processed shopping catalog images at scale using rembg and a deep learning "
-                "background removal API, providing test data and validating output quality",
-                "Used Pillow to transform raw product images to platform ad specifications",
+                "Built an automated image processing pipeline integrating a deep learning "
+                "background removal API with Pillow-based utilities, transforming raw "
+                "catalog data into production-ready ad creatives at scale",
             ],
         },
     ],
@@ -71,12 +103,13 @@ CANDIDATE_PROFILE = {
         {
             "institution": "NIT Rourkela",
             "role":        "Undergraduate Research Assistant",
+            "dates":       "Sep 2024 – May 2025",
             "highlights": [
-                "Implemented brain lesion segmentation from scratch using a U-Net architecture "
-                "on the ATLAS 2.0 MRI dataset, achieving 96.4% accuracy",
-                "Preprocessed and visualized volumetric MR images using Nibabel and Matplotlib",
-                "Evaluated and benchmarked state-of-the-art segmentation methods to identify "
-                "the most effective current approaches",
+                "Implemented brain lesion segmentation using a U-Net CNN architecture on "
+                "the ATLAS 2.0 MRI dataset, achieving 96.4% accuracy; applied "
+                "transformer-based benchmarks to evaluate state-of-the-art methods",
+                "Preprocessed and visualized volumetric MR image data using Nibabel and "
+                "Matplotlib, developing robust data pipelines for biomedical image analysis",
             ],
         },
     ],
@@ -84,59 +117,64 @@ CANDIDATE_PROFILE = {
     # ── Projects ──────────────────────────────────────────────────────────────
     "projects": [
         {
-            "name":        "Agentic Code Generation",
-            "description": "Built a LangChain + LangGraph agent (backed by Gemini) that "
-                           "automates end-to-end code generation and unit testing. "
-                           "Designed an orchestrator-worker architecture enabling multi-file "
-                           "project planning and coordinated code creation across modules. "
-                           "Directly demonstrates practical LLM agentic systems experience.",
-            "tech":        ["Python", "LangChain", "LangGraph", "Gemini", "Git"],
+            "name":        "Automated Job Intelligence & Outreach Bot (this project)",
+            "description": "Built an end-to-end agentic pipeline that scrapes job postings "
+                           "daily from LinkedIn, Indeed, Greenhouse, Lever, and Ashby; filters "
+                           "using LLM-based relevance scoring via the Claude API; and delivers "
+                           "a formatted HTML digest. Streamlit dashboard enriches listings with "
+                           "Claude-extracted team context, Serper-powered LinkedIn contact "
+                           "discovery, Apollo/Hunter email verification, and auto-drafted "
+                           "personalized outreach. Orchestrated as a scheduled GitHub Actions "
+                           "CI/CD workflow with Supabase PostgreSQL as the shared backend.",
+            "tech":        ["Python", "Claude API", "Streamlit", "GitHub Actions",
+                            "Supabase", "PostgreSQL", "REST APIs", "LangChain concepts"],
         },
         {
-            "name":        "Heart Sound Classification",
-            "description": "Preprocessed cardiac audio data using Librosa and Discrete Wavelet "
-                           "Transform, then experimented with TensorFlow architectures to select "
-                           "the most accurate model for classifying heart sounds. "
-                           "Relevant for roles involving signal processing and medical AI.",
-            "tech":        ["Python", "NumPy", "Librosa", "TensorFlow", "Jupyter"],
+            "name":        "Agentic Code Generation System",
+            "description": "Designed an orchestrator-worker agentic AI system using LangChain "
+                           "and LangGraph backed by the Gemini API that autonomously generates "
+                           "code, plans multi-file projects, and executes unit tests from "
+                           "natural language intent. Engineered and iterated on LLM reasoning "
+                           "workflows and system prompts; roadmap includes automated security "
+                           "validation and CI/CD integration.",
+            "tech":        ["Python", "LangChain", "LangGraph", "Gemini API", "Git"],
         },
         {
             "name":        "Brain Lesion Segmentation (U-Net)",
-            "description": "Implemented a U-Net convolutional architecture from scratch in "
-                           "Python/TensorFlow to segment brain lesions in MRI scans from the "
-                           "ATLAS 2.0 dataset, achieving 96.4% accuracy. "
-                           "Published as undergraduate research at NIT Rourkela.",
+            "description": "Research implementation of a U-Net CNN architecture for brain "
+                           "lesion segmentation on the ATLAS 2.0 MRI dataset, achieving 96.4% "
+                           "accuracy. Benchmarked against transformer-based state-of-the-art "
+                           "methods. Part of undergraduate research at NIT Rourkela.",
             "tech":        ["Python", "TensorFlow", "Nibabel", "NumPy", "Matplotlib"],
         },
         {
-            "name":        "Job Hunter OSINT Pipeline",
-            "description": "Designed and built a fully autonomous internship sourcing pipeline: "
-                           "nightly GitHub Actions scraper (jobspy + Greenhouse/Lever ATS APIs "
-                           "with WAF-bypass batching), Supabase PostgreSQL backend, Streamlit "
-                           "triage dashboard, and a Claude-powered enrichment layer that extracts "
-                           "hiring managers via NLP, runs an Apollo→Hunter email waterfall, and "
-                           "generates personalized outreach copy and LinkedIn referral messages "
-                           "per role. End-to-end MLOps and agentic systems in production.",
-            "tech":        ["Python", "GitHub Actions", "Supabase", "Streamlit",
-                            "Claude API", "LangChain concepts", "PostgreSQL", "REST APIs"],
+            "name":        "Heart Sound Classification",
+            "description": "Full ML pipeline for biomedical audio classification: feature "
+                           "extraction via Librosa and Discrete Wavelet Transform, then "
+                           "evaluation of CNN and LSTM architectures to select the "
+                           "highest-performing model for heart sound classification.",
+            "tech":        ["Python", "PyTorch", "TensorFlow", "Librosa", "NumPy"],
         },
     ],
 
     # ── Skills ────────────────────────────────────────────────────────────────
+    # Ordered to match the most comprehensive resume variant (honeywell_resume).
     "skills": [
-        "Python", "TensorFlow", "Pandas", "NumPy", "Scikit-Learn",
-        "LangChain", "LangGraph", "SQL", "Git", "C++",
-        "MLOps", "agentic systems", "NLP", "computer vision",
-        "statistical modeling", "REST APIs",
+        # Languages
+        "Python", "SQL", "Bash",
+        # ML & Deep Learning
+        "TensorFlow", "PyTorch", "Scikit-learn", "CNNs", "LSTMs",
+        "Transformers", "NLP", "computer vision", "signal processing",
+        # Agentic AI & LLMs
+        "LangChain", "LangGraph", "OpenAI API", "Gemini API", "Claude API",
+        "prompt engineering", "agentic systems",
+        # Data Engineering
+        "ETL/ELT pipelines", "Pandas", "NumPy", "Doc2Vec", "statistical modeling",
+        # Cloud & DevOps
+        "AWS EC2", "AWS S3", "Git", "GitHub Actions", "Docker", "SSH", "CI/CD",
+        # Dev Tools
+        "Streamlit", "Jupyter Notebook", "GitHub Copilot",
     ],
-
-    # ── Value Proposition ─────────────────────────────────────────────────────
-    "value_prop": (
-        "MS CS student at UNC Chapel Hill with production ML at American Express "
-        "(91% accuracy change-failure model, 8 automation opportunities shipped), "
-        "96.4%-accurate U-Net brain lesion segmentation research, and hands-on "
-        "LangGraph agentic systems — I build things that reach production."
-    ),
 }
 
 
@@ -391,63 +429,82 @@ Extract the signals. Return only JSON."""
 
 
 # =============================================================================
-# WEB SEARCH — FIND HIRING MANAGER VIA GOOGLE
+# WEB SEARCH — FIND HIRING MANAGER VIA SERPER.DEV
 # =============================================================================
-# Uses Google's public search to find LinkedIn profiles matching the extracted
-# title/company signals. No API key needed. Parses result snippets to extract
-# a candidate name. Rate-limited by design — only called on-demand, 3-5 times
-# per enrichment session, well within safe limits.
+# Serper.dev is a Google Search API proxy that works from datacenter IPs
+# (including Streamlit Cloud) where direct Google requests get CAPTCHA-blocked.
+# Free tier: 2,500 searches/month — more than sufficient for this use case.
+#
+# SETUP: Get a free API key at https://serper.dev → add as SERPER_API_KEY
+# in Streamlit secrets. The function fails gracefully if the key is missing.
 
-def _google_search_snippets(query: str, timeout: int = 8) -> list[str]:
+def _serper_search_snippets(query: str, timeout: int = 8) -> list[str]:
     """
-    Executes a Google search and returns a list of result snippet strings.
-    Uses a browser-like User-Agent to avoid immediate bot detection.
-    Returns up to 5 snippets, or an empty list on any failure.
+    Calls Serper.dev's Google Search API and returns a flat list of text
+    snippets from organic results and knowledge graph entries.
+
+    Serper returns clean JSON — no HTML parsing needed.
+    Returns up to 10 snippets, or [] on any failure.
     """
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept-Language": "en-US,en;q=0.9",
-    }
+    api_key = st.secrets.get("SERPER_API_KEY") or os.environ.get("SERPER_API_KEY")
+    if not api_key:
+        return []
+
     try:
-        resp = requests.get(
-            "https://www.google.com/search",
-            params={"q": query, "num": 5, "hl": "en"},
-            headers=headers,
+        resp = requests.post(
+            "https://google.serper.dev/search",
+            headers={"X-API-KEY": api_key, "Content-Type": "application/json"},
+            json={"q": query, "num": 10, "gl": "us", "hl": "en"},
             timeout=timeout,
         )
         if resp.status_code != 200:
             return []
 
-        # Extract text from <span> and <div> tags that hold snippet content.
-        # We use simple regex rather than a full HTML parser to avoid adding
-        # a beautifulsoup dependency.
-        text = resp.text
-
-        # Pull all visible text blocks between tags, strip HTML
-        raw_blocks = re.findall(r'<span[^>]*>(.*?)</span>', text, re.DOTALL)
-        raw_blocks += re.findall(r'<div[^>]*class="[^"]*BNeawe[^"]*"[^>]*>(.*?)</div>', text, re.DOTALL)
-
+        data     = resp.json()
         snippets = []
-        seen = set()
-        for block in raw_blocks:
-            # Strip remaining HTML tags
-            clean = re.sub(r'<[^>]+>', ' ', block).strip()
-            clean = re.sub(r'\s+', ' ', clean)
-            # Only keep blocks that look like person descriptions (contain name-like patterns)
-            if len(clean) > 20 and clean not in seen:
-                snippets.append(clean)
-                seen.add(clean)
-            if len(snippets) >= 8:
-                break
 
-        return snippets
+        # Knowledge graph — often contains the exact person entry
+        kg = data.get("knowledgeGraph", {})
+        if kg.get("title"):
+            snippets.append(f"{kg.get('title', '')} — {kg.get('description', '')} {kg.get('descriptionLink', '')}")
 
-    except Exception:
+        # Organic results — each has a title, link, and snippet
+        for r in data.get("organic", []):
+            parts = []
+            if r.get("title"):
+                parts.append(r["title"])
+            if r.get("snippet"):
+                parts.append(r["snippet"])
+            if parts:
+                snippets.append(" | ".join(parts))
+
+        # People also ask boxes — sometimes surface manager names indirectly
+        for paa in data.get("peopleAlsoAsk", [])[:3]:
+            if paa.get("snippet"):
+                snippets.append(paa["snippet"])
+
+        return snippets[:10]
+
+    except Exception as e:
+        st.warning(f"⚠️ Serper search error: {e}")
         return []
+
+
+def _search_snippets(query: str, timeout: int = 8) -> list[str]:
+    """
+    Unified search entry point. Uses Serper if the API key is configured,
+    otherwise logs a warning and returns empty — no silent fallback to raw
+    Google scraping since that is reliably blocked on cloud deployments.
+    """
+    api_key = st.secrets.get("SERPER_API_KEY") or os.environ.get("SERPER_API_KEY")
+    if api_key:
+        return _serper_search_snippets(query, timeout=timeout)
+
+    st.warning(
+        "⚠️ SERPER_API_KEY not set — manager search skipped. "
+        "Add a free key from serper.dev to Streamlit secrets to enable this feature."
+    )
+    return []
 
 
 def search_for_manager(
@@ -470,7 +527,7 @@ def search_for_manager(
     source_query = None
 
     for i, query in enumerate(search_queries[:3]):
-        snippets = _google_search_snippets(query)
+        snippets = _search_snippets(query)
         if snippets:
             all_snippets.extend(snippets)
             if source_query is None:
@@ -530,25 +587,35 @@ Identify the hiring manager. Return only JSON."""
 # =============================================================================
 
 def _build_profile_summary() -> str:
-    """Serializes CANDIDATE_PROFILE into a compact string for the prompt."""
+    """
+    Serializes CANDIDATE_PROFILE into a compact plain-text string passed to
+    Claude as the candidate context block. Value proposition leads so Claude
+    anchors on it before reading the detailed experience below.
+    """
     p = CANDIDATE_PROFILE
     lines = [
-        f"Name: {p['name']}",
-        f"University: {p['university']} ({p['year']}, {p['major']})",
+        f"Candidate: {p['name']}",
+        f"Education: {p['university']} — {p['year']}, {p['major']}",
     ]
     if p.get("gpa"):
         lines.append(f"GPA: {p['gpa']}")
 
-    lines.append("\nWork Experience:")
+    # Lead with the value prop so Claude uses it as the anchor
+    if p.get("value_prop"):
+        lines.append(f"\nSummary: {p['value_prop']}")
+
+    lines.append("\nWork Experience (most recent first):")
     for exp in p.get("experiences", []):
-        lines.append(f"  • {exp['role']} at {exp['company']}")
+        date_str = f" ({exp['dates']})" if exp.get("dates") else ""
+        lines.append(f"  • {exp['role']} at {exp['company']}{date_str}")
         for h in exp.get("highlights", []):
             lines.append(f"    – {h}")
 
     if p.get("research"):
         lines.append("\nResearch Experience:")
         for r in p["research"]:
-            lines.append(f"  • {r['role']} at {r['institution']}")
+            date_str = f" ({r['dates']})" if r.get("dates") else ""
+            lines.append(f"  • {r['role']} at {r['institution']}{date_str}")
             for h in r.get("highlights", []):
                 lines.append(f"    – {h}")
 
@@ -558,7 +625,6 @@ def _build_profile_summary() -> str:
         lines.append(f"    Tech: {', '.join(proj.get('tech', []))}")
 
     lines.append(f"\nSkills: {', '.join(p.get('skills', []))}")
-    lines.append(f"\nValue Proposition: {p.get('value_prop', '')}")
     return "\n".join(lines)
 
 
@@ -755,10 +821,6 @@ def run_enrichment(job: dict) -> dict:
     team_function = signals.get("team_function")
     search_queries = signals.get("search_queries", [])
     manager_titles = signals.get("manager_titles", [])
-
-    # DEBUG — remove after confirming
-    st.write("Search queries:", search_queries)
-    st.write("Raw snippets:", _google_search_snippets(search_queries[0]) if search_queries else "no queries")
 
     # ── Step 2+3: Search Google → parse manager name ─────────────────────────
     found         = search_for_manager(company, search_queries, manager_titles)
