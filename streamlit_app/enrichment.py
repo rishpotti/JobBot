@@ -772,6 +772,9 @@ def lookup_apollo(first: str, last: str, domain: str) -> dict | None:
         if resp.status_code == 403:
             st.warning("⚠️ Apollo 403 — check your API key in Streamlit secrets and that your account has credits.")
             return None
+        if resp.status_code == 422:
+            st.warning("⚠️ Apollo 422 — name or domain format rejected. Falling back to Hunter.")
+            return None
         resp.raise_for_status()
         person = resp.json().get("person") or {}
         email  = person.get("email", "")
@@ -900,17 +903,22 @@ def run_enrichment(job: dict) -> dict:
     # ── Step 5: Domain resolution ─────────────────────────────────────────────
     domain = resolve_domain(company)
 
-    # ── Step 6: Email waterfall ───────────────────────────────────────────────
+    # Email waterfall
     email_result = None
     if manager_name and domain:
         parts = manager_name.strip().split()
-        first = parts[0]  if parts          else ""
+        first = parts[0] if parts else ""
         last  = parts[-1] if len(parts) > 1 else ""
-        email_result = lookup_apollo(first, last, domain)
-        if not email_result or email_result["confidence"] < 40:
-            hunter = lookup_hunter(first, last, domain)
-            if hunter and (not email_result or hunter["confidence"] > email_result["confidence"]):
-                email_result = hunter
+        # Apollo requires both first and last name — skip if we only have one word
+        if first and last:
+            email_result = lookup_apollo(first, last, domain)
+            if not email_result or email_result["confidence"] < 40:
+                hunter = lookup_hunter(first, last, domain)
+                if hunter and (not email_result or hunter["confidence"] > email_result["confidence"]):
+                    email_result = hunter
+        elif first:
+            # Single name only — skip Apollo, try Hunter which is more lenient
+            email_result = lookup_hunter(first, "", domain)
 
     # ── Step 7: Build mailto ──────────────────────────────────────────────────
     mailto = None
