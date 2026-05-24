@@ -833,7 +833,7 @@ def build_mailto(
     Clicking the link opens the user's default email client ready to send.
     """
     first   = (manager_name or "").split()[0] if manager_name else "there"
-    subject = quote(f"Application: {title} — Summer 2026")
+    subject = quote(f"Application: {title}")
 
     name = CANDIDATE_PROFILE.get("name", "Rish Potti")
 

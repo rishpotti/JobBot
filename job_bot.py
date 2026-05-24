@@ -67,51 +67,46 @@ except Exception as e:
 # =============================================================================
 
 KEYWORDS = [
-    # --- TIER 1: Standard Data & ML Titles ---
-    "Data Science Intern Summer 2026",
-    "Data Scientist Intern Summer 2026",
-    "Machine Learning Intern Summer 2026",
-    "Machine Learning Engineer Intern 2026",
-    "Artificial Intelligence Intern 2026",
-    "AI Engineer Intern 2026",
+    # --- TIER 1: Core AI / ML Engineering ---
+    "Machine Learning Engineer",
+    "ML Engineer",
+    "AI Engineer",
+    "Artificial Intelligence Engineer",
+    "Applied Scientist",
+    "Applied Machine Learning Engineer",
+    "Research Scientist",
+    "Research Engineer",
+    "Algorithm Engineer",
 
-    # --- TIER 2: Prestige Tech Titles (Amazon/Microsoft/Nvidia style) ---
-    # These often pay 30–50% more than standard "Data Analyst" roles
-    "Applied Scientist Intern 2026",
-    "Applied Machine Learning Intern 2026",
-    "Research Scientist Intern 2026",
-    "Research Engineer Intern 2026",
-    "Algorithm Engineer Intern 2026",
+    # --- TIER 2: Data Science ---
+    "Data Scientist",
+    "Data Science Analyst",
+    "Quantitative Researcher",
+    "Quantitative Analyst",
+    "Decision Scientist",
+    "Risk Modeling Analyst",
+    "Financial Engineer",
 
-    # --- TIER 3: Fintech & Quant (High fit for Amex background) ---
-    "Quantitative Researcher Intern 2026",
-    "Quantitative Analyst Intern 2026",
-    "Quant Developer Intern 2026",
-    "Financial Engineering Intern 2026",
-    "Decision Science Intern 2026",
-    "Risk Modeling Intern 2026",
+    # --- TIER 3: Generative AI / LLMs ---
+    "Generative AI Engineer",
+    "LLM Engineer",
+    "NLP Engineer",
+    "Natural Language Processing Engineer",
+    "Computer Vision Engineer",
+    "Deep Learning Engineer",
 
-    # --- TIER 4: Emerging Tech (GenAI / LLMs) ---
-    "Generative AI Intern 2026",
-    "LLM Intern 2026",
-    "Large Language Model Intern 2026",
-    "Natural Language Processing Intern 2026",
-    "Computer Vision Intern 2026",
-    "Deep Learning Intern 2026",
+    # --- TIER 4: Software Engineering (AI/ML-adjacent) ---
+    "Software Engineer Machine Learning",
+    "Software Engineer AI",
+    "Software Engineer Data",
+    "Data Engineer",
+    "MLOps Engineer",
+    "AI Infrastructure Engineer",
 
-    # --- TIER 5: Hidden Engineering Roles ---
-    # Often listed as SWE but are 100% ML work
-    "Software Engineer Intern Machine Learning",
-    "Software Engineer Intern AI",
-    "Software Engineer Intern Data",
-    "Data Engineer Intern Summer 2026",
-    "MLOps Intern 2026",
-    "AI Infrastructure Intern 2026",
-
-    # --- TIER 6: Domain Specific (Bio/Health for U-Net project) ---
-    "Biomedical Data Science Intern",
-    "Computational Biology Intern",
-    "Imaging AI Intern",
+    # --- TIER 5: Domain Specific (Bio/Health) ---
+    "Biomedical Data Scientist",
+    "Computational Biologist",
+    "AI Scientist",
 ]
 
 PRIORITY_COMPANIES = [
@@ -236,10 +231,15 @@ ATS_DOMAIN_KEYWORDS = [
     "biomedical", "computational biology", "imaging ai",
 ]
 
-ATS_INTERN_MARKERS = [
-    "intern", "internship", "co-op", "coop", "co op",
-    "summer 2026", "summer2026", "2026",
+# Titles that disqualify a role regardless of domain match.
+ATS_EXCLUDE_MARKERS = [
+    "phd", "ph.d", "doctorate", "doctoral",   # PhD-only roles
+    "intern", "internship", "co-op", "coop",  # internships
+    "staff ", "principal ",                    # too senior
+    "vice president", " vp ",
+    "director", "head of", "chief ",
 ]
+
 
 # ── US Location Filtering ─────────────────────────────────────────────────────
 # Greenhouse and Lever serve global companies. We only want US-based roles.
@@ -448,7 +448,7 @@ def send_email(jobs: list) -> None:
     # FIX: Receiver email is now pulled from an environment secret instead of
     # being hardcoded. Falls back to the original address so existing runs
     # don't break if the secret hasn't been added yet.
-    receiver_email  = os.environ.get("EMAIL_RECEIVER")
+    receiver_email  = os.environ.get("EMAIL_RECEIVER", "rishpotti@gmail.com")
 
     if not sender_email or not sender_password:
         print("❌ EMAIL_USER or EMAIL_PASS not set — skipping email.", flush=True)
@@ -528,18 +528,17 @@ def send_email(jobs: list) -> None:
 
 def _title_is_relevant(title: str) -> bool:
     """
-    Returns True only if the title satisfies BOTH conditions:
-      1. Contains a domain keyword — confirming the role is in DS/ML/Quant/AI
-      2. Contains an intern marker — confirming it's an internship, not FTE
+    Returns True if the title is a relevant full-time DS/ML/AI/SWE role.
 
-    A title like "Machine Learning Intern" passes (domain ✓, intern ✓).
-    A title like "Marketing Intern" fails  (no domain ✗).
-    A title like "Machine Learning Engineer" fails (no intern marker ✗).
+    Rules (applied in order):
+      1. Reject if title contains any ATS_EXCLUDE_MARKER — PhD-only, internship,
+         or too-senior roles are filtered out immediately.
+      2. Accept if title contains any ATS_DOMAIN_KEYWORD.
     """
     t = title.lower()
-    has_domain = any(kw in t for kw in ATS_DOMAIN_KEYWORDS)
-    has_intern = any(m in t for m in ATS_INTERN_MARKERS)
-    return has_domain and has_intern
+    if any(m in t for m in ATS_EXCLUDE_MARKERS):
+        return False
+    return any(kw in t for kw in ATS_DOMAIN_KEYWORDS)
 
 
 def _is_us_location(location: str) -> bool:
@@ -848,7 +847,7 @@ def main():
                 search_term=search_query,
                 location="United States",
                 results_wanted=50,
-                hours_old=24,
+                hours_old=72,  # Full-time roles; wider window than internship scraping
             )
 
             if jobs is not None and not jobs.empty:
@@ -907,12 +906,30 @@ def main():
     unique_condensed_list = list(condensed_jobs.values())
     print(f"After dedup: {len(unique_condensed_list)} unique roles.", flush=True)
 
-    # ── Quality filter ────────────────────────────────────────────────────────
+    # ── PhD / intern exclusion + company quality filter ──────────────────────
+    # _title_is_relevant already gates ATS results, but jobspy results bypass
+    # that function, so we apply the exclusion here to everything.
+    EXCLUDE_TITLE_TERMS = {
+        "phd", "ph.d", "doctorate", "doctoral",
+        "intern", "internship", "co-op", "coop",
+    }
+
+    def _title_excluded(t: str) -> bool:
+        tl = t.lower()
+        return any(m in tl for m in EXCLUDE_TITLE_TERMS)
+
     filtered_jobs = [
         j for j in unique_condensed_list
         if is_high_quality(j.get("company"), master_safe_list)
+        and not _title_excluded(j.get("title", ""))
     ]
-    print(f"After company filter: {len(filtered_jobs)} matches.", flush=True)
+    removed = sum(
+        1 for j in unique_condensed_list
+        if is_high_quality(j.get("company"), master_safe_list)
+        and _title_excluded(j.get("title", ""))
+    )
+    print(f"After company filter: {len(filtered_jobs)} matches. "
+          f"({removed} PhD/intern roles excluded)", flush=True)
 
     # ── Output: Supabase write + email ────────────────────────────────────────
     if filtered_jobs:
