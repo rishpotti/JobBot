@@ -233,12 +233,23 @@ ATS_DOMAIN_KEYWORDS = [
 
 # Titles that disqualify a role regardless of domain match.
 ATS_EXCLUDE_MARKERS = [
-    "phd", "ph.d", "doctorate", "doctoral",   # PhD-only roles
-    "intern", "internship", "co-op", "coop",  # internships
-    "staff ", "principal ",                    # too senior
-    "vice president", " vp ",
-    "director", "head of", "chief ",
+    "phd", "ph.d", "doctorate", "doctoral",        # PhD-only roles
+    "intern", "internship", "co-op", "coop",       # internships
+    # Seniority signals — these titles indicate non-entry-level roles
+    "senior", "sr.", "sr ", "staff ", "principal ", "lead ", "leader",
+    "manager", "management", "director", "head of", "chief ",
+    "vice president", " vp ", "president",
+    "ii", "iii", "iv",                              # level suffixes (Engineer II/III)
+    "expert", "fellow", "architect",
 ]
+
+# ── Entry-Level Experience Filtering ──────────────────────────────────────────
+# The reliable entry-level signal lives in the job description, not the title.
+# We parse the stated years-of-experience requirement and reject anything above
+# the threshold. Roles with NO stated requirement are KEPT (often new-grad roles
+# that just say "Software Engineer").
+MAX_YEARS_EXPERIENCE = 3      # Reject roles requiring more than this many years
+KEEP_IF_NO_REQUIREMENT = True  # Keep roles that state no experience requirement
 
 
 # ── US Location Filtering ─────────────────────────────────────────────────────
@@ -575,6 +586,73 @@ def _is_us_location(location: str) -> bool:
     return True
 
 
+def _parse_max_years_required(text: str) -> int | None:
+    """
+    Parses a job title + description for a stated years-of-experience requirement.
+    Returns the MINIMUM years the role requires (the lower bound of any range),
+    or None if no requirement is stated.
+
+    Handles patterns like:
+      "5+ years"            → 5
+      "3-5 years"           → 3   (lower bound)
+      "minimum of 4 years"  → 4
+      "at least 2 years"    → 2
+      "5 years of experience" → 5
+    Ignores matches clearly unrelated to experience (e.g. "10 years ago").
+    """
+    if not text:
+        return None
+
+    t = text.lower()
+
+    # Common experience-requirement patterns. Each captures the first number.
+    patterns = [
+        r'(\d+)\+?\s*-\s*\d+\s*years?',          # "3-5 years" → 3
+        r'(\d+)\+\s*years?',                      # "5+ years"  → 5
+        r'minimum\s+of\s+(\d+)\s*years?',         # "minimum of 4 years"
+        r'at\s+least\s+(\d+)\s*years?',           # "at least 2 years"
+        r'(\d+)\s*years?\s+of\s+(?:relevant\s+)?(?:professional\s+)?experience',
+        r'(\d+)\s*\+?\s*yrs?',                    # "5+ yrs"
+    ]
+
+    found_years = []
+    for pat in patterns:
+        for m in re.finditer(pat, t):
+            try:
+                yrs = int(m.group(1))
+                # Sanity bound — ignore absurd matches like "100 years"
+                if 0 <= yrs <= 20:
+                    found_years.append(yrs)
+            except (ValueError, IndexError):
+                continue
+
+    if not found_years:
+        return None
+
+    # Return the smallest stated requirement — the most lenient interpretation
+    return min(found_years)
+
+
+def _is_entry_level(title: str, description: str) -> bool:
+    """
+    Decides whether a role is entry-level enough to keep.
+
+    1. Parse years-of-experience requirement from title + description.
+    2. If a requirement is found and exceeds MAX_YEARS_EXPERIENCE → reject.
+    3. If no requirement is found → keep or drop based on KEEP_IF_NO_REQUIREMENT.
+
+    Title-based seniority (Senior, Staff, etc.) is already handled separately
+    by the exclusion-marker filter, so this focuses purely on the years signal.
+    """
+    combined = f"{title} {description}"
+    required = _parse_max_years_required(combined)
+
+    if required is None:
+        return KEEP_IF_NO_REQUIREMENT
+
+    return required <= MAX_YEARS_EXPERIENCE
+
+
 def scrape_greenhouse(timeout: int = 10) -> list:
     """
     Queries the public Greenhouse job board API for every company in
@@ -906,30 +984,49 @@ def main():
     unique_condensed_list = list(condensed_jobs.values())
     print(f"After dedup: {len(unique_condensed_list)} unique roles.", flush=True)
 
-    # ── PhD / intern exclusion + company quality filter ──────────────────────
-    # _title_is_relevant already gates ATS results, but jobspy results bypass
-    # that function, so we apply the exclusion here to everything.
+    # ── Exclusion + entry-level + company quality filter ─────────────────────
+    # Three gates applied to every role (jobspy + ATS):
+    #   1. Title exclusion — PhD, intern, and seniority terms
+    #   2. Entry-level — years-of-experience parsed from title + description
+    #   3. Company quality — must match the master company list
     EXCLUDE_TITLE_TERMS = {
         "phd", "ph.d", "doctorate", "doctoral",
         "intern", "internship", "co-op", "coop",
+        "senior", "sr.", "sr ", "staff ", "principal ", "lead ", "leader",
+        "manager", "director", "head of", "chief ", "vice president", " vp ",
+        "expert", "fellow", "architect", " ii", " iii", " iv",
     }
 
     def _title_excluded(t: str) -> bool:
-        tl = t.lower()
+        tl = f" {t.lower()} "   # pad so " ii" / " vp " match word boundaries
         return any(m in tl for m in EXCLUDE_TITLE_TERMS)
 
-    filtered_jobs = [
-        j for j in unique_condensed_list
-        if is_high_quality(j.get("company"), master_safe_list)
-        and not _title_excluded(j.get("title", ""))
-    ]
-    removed = sum(
-        1 for j in unique_condensed_list
-        if is_high_quality(j.get("company"), master_safe_list)
-        and _title_excluded(j.get("title", ""))
+    filtered_jobs = []
+    n_title_excluded = 0
+    n_exp_excluded   = 0
+    n_company_miss   = 0
+
+    for j in unique_condensed_list:
+        title = j.get("title", "")
+        desc  = j.get("description", "")
+
+        if not is_high_quality(j.get("company"), master_safe_list):
+            n_company_miss += 1
+            continue
+        if _title_excluded(title):
+            n_title_excluded += 1
+            continue
+        if not _is_entry_level(title, desc):
+            n_exp_excluded += 1
+            continue
+        filtered_jobs.append(j)
+
+    print(
+        f"After all filters: {len(filtered_jobs)} matches. "
+        f"(excluded — title/seniority: {n_title_excluded}, "
+        f"experience: {n_exp_excluded}, company-miss: {n_company_miss})",
+        flush=True,
     )
-    print(f"After company filter: {len(filtered_jobs)} matches. "
-          f"({removed} PhD/intern roles excluded)", flush=True)
 
     # ── Output: Supabase write + email ────────────────────────────────────────
     if filtered_jobs:
