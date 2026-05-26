@@ -9,6 +9,7 @@
 import sys
 import time
 import random
+import re
 
 print("---------- JOB BOT STARTING ----------", flush=True)
 
