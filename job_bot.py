@@ -181,11 +181,13 @@ DOMAIN_KEYWORDS = [
     "biomedical", "computational biology", "imaging ai",
 ]
 
-# Titles that disqualify a role from any source: PhD-only, internships, and
-# non-entry-level seniority.
+# Titles that disqualify a role from any source: PhD-only, non-full-time
+# (internships, student programs, contract/part-time), and non-entry-level seniority.
 EXCLUDE_TITLE_TERMS = [
     "phd", "ph.d", "doctorate", "doctoral",
-    "intern", "internship", "co-op", "coop",
+    "intern", "interns", "internship", "co-op", "coop", "summer", "student",
+    "apprentice", "apprenticeship", "fellowship", "resident", "residency",
+    "part-time", "part time", "contract", "contractor", "temporary", "temp", "seasonal",
     "senior", "sr", "staff", "principal", "lead", "leader",
     "manager", "management", "director", "head of", "chief",
     "president", "vp",
@@ -394,10 +396,13 @@ def scrape_jobspy() -> list:
     return all_jobs
 
 
+# Each parser returns (title, location, url, description, employment_type).
+
 def _parse_greenhouse(data) -> list:
+    # The Greenhouse list API has no employment-type field; the title filter covers it.
     return [
         (j.get("title"), (j.get("location") or {}).get("name"),
-         j.get("absolute_url"), _html_to_text(j.get("content", "")))
+         j.get("absolute_url"), _html_to_text(j.get("content", "")), "")
         for j in data.get("jobs", [])
     ]
 
@@ -407,7 +412,8 @@ def _parse_lever(data) -> list:
         raise ValueError("unexpected response format")
     return [
         (j.get("text"), (j.get("categories") or {}).get("location"),
-         j.get("hostedUrl"), j.get("descriptionPlain"))
+         j.get("hostedUrl"), j.get("descriptionPlain"),
+         (j.get("categories") or {}).get("commitment"))   # e.g. "Full-time", "Intern"
         for j in data
     ]
 
@@ -426,7 +432,8 @@ def _parse_ashby(data) -> list:
             elif isinstance(loc_obj, str):
                 loc = loc_obj
         out.append((j.get("title"), loc, j.get("jobUrl") or j.get("applyUrl"),
-                    j.get("descriptionPlain")))
+                    j.get("descriptionPlain"),
+                    j.get("employmentType")))                # e.g. "FullTime", "Intern"
     return out
 
 
@@ -461,7 +468,7 @@ def scrape_ats(site: str, companies: dict, url_template: str, parse, timeout: in
             continue
 
         matched = 0
-        for title, loc, url, desc in postings:
+        for title, loc, url, desc, emp_type in postings:
             title = str(title or "")
             loc = str(loc or "").strip() or "Unknown"
             if not DOMAIN_RE.search(title) or not _is_us_location(loc):
@@ -473,6 +480,7 @@ def scrape_ats(site: str, companies: dict, url_template: str, parse, timeout: in
                 "site":        site,
                 "job_url":     url or "",
                 "description": str(desc or "").strip(),
+                "job_type":    str(emp_type or ""),
             })
             matched += 1
         print(f"  → {company}: {matched}/{len(postings)} postings matched.", flush=True)
@@ -519,13 +527,30 @@ def condense_jobs(all_jobs: list) -> list:
     return list(condensed.values())
 
 
+NON_FULL_TIME_TYPES = ("intern", "parttime", "contract", "temporary", "temp",
+                       "seasonal", "volunteer", "perdiem")
+
+
+def _is_full_time(job_type) -> bool:
+    """
+    Checks the source-reported employment type (jobspy "fulltime"/"internship",
+    Lever "Full-time"/"Intern", Ashby "FullTime"/"Contract"). Blank → keep.
+    """
+    t = re.sub(r"[^a-z]", "", str(job_type or "").lower())
+    if not t or "fulltime" in t:
+        return True
+    return not any(x in t for x in NON_FULL_TIME_TYPES)
+
+
 def filter_jobs(jobs: list, matcher: CompanyMatcher) -> list:
-    """Company quality → title exclusion → years-of-experience."""
+    """Company quality → employment type → title exclusion → years-of-experience."""
     kept = []
-    n_company = n_title = n_exp = 0
+    n_company = n_type = n_title = n_exp = 0
     for j in jobs:
         if not matcher.matches(j["company"]):
             n_company += 1
+        elif not _is_full_time(j.get("job_type")):
+            n_type += 1
         elif _title_excluded(j["title"]):
             n_title += 1
         elif not _is_entry_level(j["title"], str(j.get("description") or "")):
@@ -534,7 +559,7 @@ def filter_jobs(jobs: list, matcher: CompanyMatcher) -> list:
             kept.append(j)
     print(
         f"After filters: {len(kept)} matches (excluded — company-miss: {n_company}, "
-        f"title/seniority: {n_title}, experience: {n_exp}).",
+        f"not full-time: {n_type}, title: {n_title}, experience: {n_exp}).",
         flush=True,
     )
     return kept
