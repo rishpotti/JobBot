@@ -37,7 +37,7 @@ def get_client() -> Client:
 # READS
 # =============================================================================
 
-def fetch_pending_jobs(days_back: int = 3, priority_only: bool = False) -> list:
+def fetch_pending_jobs(days_back: int = 7, priority_only: bool = False) -> list:
     """
     Returns all jobs scraped within the last `days_back` days that have not
     yet been contacted or rejected. Includes their enrichment data via the
@@ -98,25 +98,25 @@ def fetch_history() -> list:
 def fetch_stats() -> dict:
     """
     Returns headline counts for the stats bar:
-      - total_today:  jobs scraped today
-      - priority_today: priority jobs scraped today
-      - enriched:     jobs in 'enriched' status (ready to contact)
-      - contacted:    total contacted all-time
+      - total_week:    jobs scraped in the last 7 days (scraper runs weekly)
+      - priority_week: priority jobs scraped in the last 7 days
+      - enriched:      jobs in 'enriched' status (ready to contact)
+      - contacted:     total contacted all-time
     """
-    client  = get_client()
-    today   = date.today().isoformat()
+    client = get_client()
+    since  = (date.today() - timedelta(days=7)).isoformat()
 
-    total_today = (
+    total_week = (
         client.table("pending_jobs")
         .select("id", count="exact")
-        .eq("scraped_date", today)
+        .gte("scraped_date", since)
         .execute()
         .count or 0
     )
-    priority_today = (
+    priority_week = (
         client.table("pending_jobs")
         .select("id", count="exact")
-        .eq("scraped_date", today)
+        .gte("scraped_date", since)
         .eq("is_priority", True)
         .execute()
         .count or 0
@@ -136,8 +136,8 @@ def fetch_stats() -> dict:
     )
 
     return {
-        "total_today":    total_today,
-        "priority_today": priority_today,
+        "total_week":     total_week,
+        "priority_week":  priority_week,
         "enriched":       enriched,
         "contacted":      contacted,
     }
@@ -184,6 +184,16 @@ def mark_contacted(
 
     client.table("pending_jobs").update({
         "status": "contacted",
+    }).eq("id", job_id).execute()
+
+
+def reset_enrichment(job_id: int) -> None:
+    """Deletes a job's enrichment data and puts it back in the hopper."""
+    client = get_client()
+    client.table("enriched_jobs").delete().eq("pending_job_id", job_id).execute()
+    client.table("pending_jobs").update({
+        "status":      "pending",
+        "is_targeted": False,
     }).eq("id", job_id).execute()
 
 

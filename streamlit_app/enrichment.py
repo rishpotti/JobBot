@@ -119,7 +119,7 @@ CANDIDATE_PROFILE = {
         {
             "name":        "Automated Job Intelligence & Outreach Bot (this project)",
             "description": "Built an end-to-end agentic pipeline that scrapes job postings "
-                           "daily from LinkedIn, Indeed, Greenhouse, Lever, and Ashby; filters "
+                           "weekly from LinkedIn, Indeed, Greenhouse, Lever, and Ashby; filters "
                            "using LLM-based relevance scoring via the Claude API; and delivers "
                            "a formatted HTML digest. Streamlit dashboard enriches listings with "
                            "Claude-extracted team context, Serper-powered LinkedIn contact "
@@ -194,6 +194,22 @@ def _get_anthropic():
     except ImportError:
         st.error("❌ anthropic package not installed. Check requirements.txt.")
         st.stop()
+
+
+HAIKU_MODEL = "claude-haiku-4-5-20251001"
+
+
+def _claude_json(system: str, user: str, max_tokens: int) -> dict:
+    """One Haiku call that must return a JSON object; strips stray ``` fences."""
+    resp = _get_anthropic().messages.create(
+        model=HAIKU_MODEL,
+        max_tokens=max_tokens,
+        system=system,
+        messages=[{"role": "user", "content": user}],
+    )
+    raw = resp.content[0].text.strip()
+    raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
+    return json.loads(raw)
 
 
 # =============================================================================
@@ -360,8 +376,6 @@ def extract_jd_signals(description: str, company: str, title: str) -> dict:
       "search_queries":  list[str],   # 5 queries, most specific → broadest
     }
     """
-    client = _get_anthropic()
-
     system = """You are a recruiting intelligence assistant.
 Your job is to read a job description and extract structured signals that can
 be used to search LinkedIn for the hiring manager.
@@ -377,7 +391,7 @@ STRICT RULES:
     Query 2: site:linkedin.com/in "[Company]" "[Second manager title]"
     Query 3: site:linkedin.com/in "[Company]" "[Broader department title, e.g. Director of Engineering]"
     Query 4: site:linkedin.com/in "[Company]" "[Team keyword from JD, e.g. 'machine learning' OR 'AI']" "manager"
-    Query 5: "[Company]" "[team function keyword]" "hiring manager" intern 2026 site:linkedin.com
+    Query 5: "[Company]" "[team function keyword]" "hiring manager" site:linkedin.com
   The final two queries are intentionally broader to cast a wider net when
   exact title searches return no results.
 - If the JD mentions a team name, include it.
@@ -393,7 +407,7 @@ Example output for an ML infra role at Stripe:
     "site:linkedin.com/in \\"Stripe\\" \\"ML Engineering Manager\\"",
     "site:linkedin.com/in \\"Stripe\\" \\"Director of Machine Learning\\"",
     "site:linkedin.com/in \\"Stripe\\" \\"machine learning\\" \\"manager\\"",
-    "\\"Stripe\\" \\"ML Platform\\" \\"hiring manager\\" intern 2026 site:linkedin.com"
+    "\\"Stripe\\" \\"ML Platform\\" \\"hiring manager\\" site:linkedin.com"
   ]
 }"""
 
@@ -406,21 +420,13 @@ Job Description:
 Extract the signals. Return only JSON."""
 
     try:
-        resp = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=500,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        )
-        raw = resp.content[0].text.strip()
-        raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
-        result = json.loads(raw)
+        result = _claude_json(system, user, max_tokens=500)
         result.setdefault("team_name", None)
         result.setdefault("team_function", None)
         result.setdefault("manager_titles", [])
         result.setdefault("search_queries", [])
         return result
-    except (json.JSONDecodeError, Exception) as e:
+    except Exception as e:
         st.warning(f"⚠️ JD signal extraction failed for {company}: {e}")
         return {
             "team_name":      None,
@@ -440,7 +446,7 @@ Extract the signals. Return only JSON."""
 # SETUP: Get a free API key at https://serper.dev → add as SERPER_API_KEY
 # in Streamlit secrets. The function fails gracefully if the key is missing.
 
-def _serper_search_snippets(query: str, timeout: int = 8) -> list[str]:
+def _search_snippets(query: str, timeout: int = 8) -> list[str]:
     """
     Calls Serper.dev's Google Search API and returns a flat list of text
     snippets from organic results and knowledge graph entries.
@@ -450,7 +456,10 @@ def _serper_search_snippets(query: str, timeout: int = 8) -> list[str]:
     """
     api_key = st.secrets.get("SERPER_API_KEY") or os.environ.get("SERPER_API_KEY")
     if not api_key:
-        st.warning("⚠️ Serper: SERPER_API_KEY not found in secrets.")
+        st.warning(
+            "⚠️ SERPER_API_KEY not set — manager search skipped. "
+            "Add a free key from serper.dev to Streamlit secrets to enable this feature."
+        )
         return []
 
     try:
@@ -487,30 +496,13 @@ def _serper_search_snippets(query: str, timeout: int = 8) -> list[str]:
             if paa.get("snippet"):
                 snippets.append(paa["snippet"])
 
-        return snippets[:10]
+        snippets = snippets[:10]
+        st.caption(f"🔍 Serper query: `{query[:80]}` → {len(snippets)} snippets")
+        return snippets
 
     except Exception as e:
         st.warning(f"⚠️ Serper search error: {e}")
         return []
-
-
-def _search_snippets(query: str, timeout: int = 8) -> list[str]:
-    """
-    Unified search entry point. Uses Serper if the API key is configured,
-    otherwise warns and returns empty.
-    """
-    api_key = st.secrets.get("SERPER_API_KEY") or os.environ.get("SERPER_API_KEY")
-    if api_key:
-        result = _serper_search_snippets(query, timeout=timeout)
-        # Surface result count so debug output is meaningful
-        st.caption(f"🔍 Serper query: `{query[:80]}` → {len(result)} snippets")
-        return result
-
-    st.warning(
-        "⚠️ SERPER_API_KEY not set — manager search skipped. "
-        "Add a free key from serper.dev to Streamlit secrets to enable this feature."
-    )
-    return []
 
 
 def search_for_manager(
@@ -519,7 +511,7 @@ def search_for_manager(
     manager_titles:  list[str],
 ) -> dict:
     """
-    Runs up to 3 Google searches using the Claude-generated queries.
+    Runs up to 5 Google searches using the Claude-generated queries.
     Collects result snippets, then passes them to Claude to identify
     the most likely hiring manager name and title.
 
@@ -527,22 +519,20 @@ def search_for_manager(
              "search_source": str}  where search_source describes which
     query produced the result.
     """
-    client = _get_anthropic()
-
     all_snippets = []
     source_query = None
 
-    # Run all queries (up to 5). Always run all of them — broader queries
-    # at the end of the list often surface names that specific title searches miss.
-    # Stop early only if we've already accumulated 10+ snippets with a name signal.
-    for i, query in enumerate(search_queries[:5]):
+    # Always run all queries — broader queries at the end of the list often
+    # surface names that specific title searches miss.
+    queries = search_queries[:5]
+    for i, query in enumerate(queries):
         snippets = _search_snippets(query)
         if snippets:
             all_snippets.extend(snippets)
             if source_query is None:
                 source_query = query
         # Polite delay between requests
-        if i < len(search_queries) - 1:
+        if i < len(queries) - 1:
             time.sleep(1.2)
 
     if not all_snippets:
@@ -572,21 +562,13 @@ Google search result snippets:
 Identify the hiring manager. Return only JSON."""
 
     try:
-        resp = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=120,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        )
-        raw = resp.content[0].text.strip()
-        raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
-        result = json.loads(raw)
+        result = _claude_json(system, user, max_tokens=120)
         return {
             "manager_name":   result.get("manager_name"),
             "manager_title":  result.get("manager_title"),
             "search_source":  source_query or "google",
         }
-    except (json.JSONDecodeError, Exception) as e:
+    except Exception as e:
         st.warning(f"⚠️ Manager name extraction from search failed: {e}")
         return {"manager_name": None, "manager_title": None, "search_source": "parse_error"}
 
@@ -653,7 +635,6 @@ def generate_personalized_outreach(
     linkedin_search_query   — alumni search string for UNC referral
     linkedin_message        — ≤280-char LinkedIn connection note
     """
-    client  = _get_anthropic()
     profile = _build_profile_summary()
 
     manager_line = (
@@ -715,28 +696,19 @@ LINKEDIN MESSAGE (HARD LIMIT: ≤280 characters — count carefully):
 - No company praise. No generic enthusiasm. ≤280 chars, non-negotiable."""
 
     try:
-        resp = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1200,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        )
-        raw = resp.content[0].text.strip()
-        raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
-        result = json.loads(raw)
+        result = _claude_json(system, user, max_tokens=1200)
 
         li_msg = result.get("linkedin_message") or ""
         if len(li_msg) > 280:
             li_msg = li_msg[:277] + "..."
-        result["linkedin_message"] = li_msg
 
         return {
             "personalized_email_body": result.get("personalized_email_body"),
             "linkedin_search_query":   result.get("linkedin_search_query"),
-            "linkedin_message":        result.get("linkedin_message"),
+            "linkedin_message":        li_msg,
         }
 
-    except (json.JSONDecodeError, Exception) as e:
+    except Exception as e:
         st.warning(f"⚠️ Outreach generation failed for {company}: {e}")
         return {
             "personalized_email_body": None,
@@ -948,7 +920,7 @@ def run_enrichment(job: dict) -> dict:
         "personalized_email_body": email_body,
         "linkedin_search_query":   linkedin_search,
         "linkedin_message":        linkedin_message,
-        "linkedin_search_queries": search_queries,   # store all 3 queries for debugging
+        "linkedin_search_queries": search_queries,   # store all queries for debugging
         "manager_search_source":   search_source,    # which query produced the result
     }
 

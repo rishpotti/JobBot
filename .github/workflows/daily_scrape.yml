@@ -1,9 +1,9 @@
-name: Daily Job Scraper
+name: Weekly Job Scraper
 
 on:
   schedule:
-    # Runs at 12:00 UTC (7:00 AM EST) every day
-    - cron: '0 12 * * *'
+    # Runs at 12:00 UTC (7:00 AM EST) every Monday
+    - cron: '0 12 * * 1'
   workflow_dispatch: # Allows manual trigger for testing
 
 jobs:
@@ -12,13 +12,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4  # FIX: Updated from deprecated @v3
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5  # FIX: Updated from deprecated @v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'  # Caches pip dependencies — shaves 30–60s off each run
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -29,8 +29,8 @@ jobs:
         env:
           EMAIL_USER:           ${{ secrets.EMAIL_USER }}
           EMAIL_PASS:           ${{ secrets.EMAIL_PASS }}
-          EMAIL_RECEIVER:       ${{ secrets.EMAIL_RECEIVER }}       # NEW: replaces hardcoded address
-          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}         # NEW: Supabase project URL
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }} # NEW: server-side write key
-          PYTHONUNBUFFERED:     "1"  # Ensures print() output appears in Actions logs in real time
+          EMAIL_RECEIVER:       ${{ secrets.EMAIL_RECEIVER }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}         # Also used to skip roles sent in earlier digests
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PYTHONUNBUFFERED:     "1"
         run: python job_bot.py

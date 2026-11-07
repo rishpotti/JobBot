@@ -4,9 +4,10 @@
 # Deploy via Streamlit Community Cloud pointing to streamlit_app/app.py
 # =============================================================================
 
+import html
 import streamlit as st
 import pandas as pd
-from datetime import date
+from datetime import date, timedelta
 
 from db import (
     fetch_pending_jobs,
@@ -16,6 +17,7 @@ from db import (
     mark_targeted,
     mark_contacted,
     mark_rejected,
+    reset_enrichment,
     insert_manual_job,
 )
 from enrichment import run_enrichment
@@ -285,7 +287,7 @@ st.markdown(
 
 with st.sidebar:
     st.markdown('<div class="section-label">Filters</div>', unsafe_allow_html=True)
-    days_back      = st.slider("Days of history", min_value=1, max_value=14, value=3,
+    days_back      = st.slider("Days of history", min_value=1, max_value=30, value=7,
                                help="How many past days of scraped jobs to show")
     priority_only  = st.checkbox("Priority companies only", value=False)
 
@@ -311,15 +313,15 @@ c1, c2, c3, c4 = st.columns(4)
 with c1:
     st.markdown(
         f'<div class="stat-card">'
-        f'<div class="stat-number">{stats["total_today"]}</div>'
-        f'<div class="stat-label">Scraped Today</div></div>',
+        f'<div class="stat-number">{stats["total_week"]}</div>'
+        f'<div class="stat-label">Scraped This Week</div></div>',
         unsafe_allow_html=True,
     )
 with c2:
     st.markdown(
         f'<div class="stat-card">'
-        f'<div class="stat-number gold">{stats["priority_today"]}</div>'
-        f'<div class="stat-label">Priority Today</div></div>',
+        f'<div class="stat-number gold">{stats["priority_week"]}</div>'
+        f'<div class="stat-label">Priority This Week</div></div>',
         unsafe_allow_html=True,
     )
 with c3:
@@ -345,7 +347,7 @@ st.markdown("<div style='height:1.25rem'></div>", unsafe_allow_html=True)
 # =============================================================================
 
 tab1, tab2, tab3 = st.tabs([
-    "📋  Daily Hopper",
+    "📋  Job Hopper",
     "✏️  Manual Injection",
     "📊  Outreach History",
 ])
@@ -483,34 +485,32 @@ with tab1:
             priority_badge = '<span class="badge priority">⭐ Priority</span> ' if is_priority else ""
             manual_badge   = '<span class="badge manual">Manual</span> ' if source == "manual" else ""
 
-            if confidence >= 70:
-                conf_icon = "●"; conf_cls = "confidence-high"
-            elif confidence >= 40:
-                conf_icon = "●"; conf_cls = "confidence-mid"
-            else:
-                conf_icon = "●"; conf_cls = "confidence-low"
+            conf_cls = ("confidence-high" if confidence >= 70
+                        else "confidence-mid" if confidence >= 40
+                        else "confidence-low")
+            esc = lambda v: html.escape(str(v or ""))
 
             # ── Top info card ─────────────────────────────────────────────────
             card_html = f"""
 <div class="result-card {priority_class}">
   <div style="display:flex; justify-content:space-between; align-items:flex-start;">
     <div>
-      <div class="result-company">{priority_badge}{manual_badge}{company}</div>
-      <div class="result-title">{title}</div>
-      <div class="result-location">{location}</div>
+      <div class="result-company">{priority_badge}{manual_badge}{esc(company)}</div>
+      <div class="result-title">{esc(title)}</div>
+      <div class="result-location">{esc(location)}</div>
     </div>
     <div style="text-align:right; min-width:220px;">"""
 
             if manager_name:
                 card_html += f"""
-      <div class="manager-name">👤 {manager_name}</div>
-      <div class="manager-title-text">{manager_title or ''}</div>"""
+      <div class="manager-name">👤 {esc(manager_name)}</div>
+      <div class="manager-title-text">{esc(manager_title)}</div>"""
 
             if manager_email:
                 card_html += f"""
       <div style="margin-top:0.35rem;">
-        <div class="email-text">{manager_email}</div>
-        <div class="{conf_cls}">{conf_icon} {confidence}% confidence · {email_source}</div>
+        <div class="email-text">{esc(manager_email)}</div>
+        <div class="{conf_cls}">● {confidence}% confidence · {esc(email_source)}</div>
       </div>"""
             elif extr_status == "no_email_found":
                 card_html += '<div class="no-contact" style="margin-top:0.35rem;">Manager found — no email located</div>'
@@ -543,13 +543,7 @@ with tab1:
             with btn4:
                 if st.button("🔄 Re-enrich", key=f"reenrich_{job['id']}", use_container_width=True,
                              help="Delete stale enrichment data and re-run the full pipeline"):
-                    from db import get_client as _gc
-                    # Delete old enriched_jobs rows for this job
-                    _gc().table("enriched_jobs").delete().eq("pending_job_id", job["id"]).execute()
-                    # Reset status so it re-enters the pipeline
-                    _gc().table("pending_jobs").update(
-                        {"status": "pending", "is_targeted": False}
-                    ).eq("id", job["id"]).execute()
+                    reset_enrichment(job["id"])
                     st.toast(f"Reset {company} — check the box in the hopper to re-enrich.", icon="🔄")
                     st.rerun()
 
@@ -560,16 +554,10 @@ with tab1:
             with exp_col1:
                 with st.expander("📝 Email preview", expanded=False):
                     if email_body:
-                        manager_first = (manager_name or "").split()[0] if manager_name else "there"
-                        full_preview = (
-                            f"**Hi {manager_first},**\n\n"
-                            f"{email_body.strip()}\n\n"
-                            f"**Best,**  \n**Rish**"
-                        )
                         st.markdown(
                             f'<div style="font-size:0.82rem; color:#cbd5e1; '
                             f'line-height:1.7; white-space:pre-wrap;">'
-                            f'{email_body.strip()}</div>',
+                            f'{html.escape(email_body.strip())}</div>',
                             unsafe_allow_html=True,
                         )
                         st.caption(
@@ -619,7 +607,7 @@ with tab1:
                             f'<div style="background:#0d1321; border:1px solid #1e2d40; '
                             f'border-radius:6px; padding:0.75rem 1rem; '
                             f'font-size:0.82rem; color:#e2e8f0; line-height:1.6;">'
-                            f'{li_message}</div>'
+                            f'{html.escape(li_message)}</div>'
                             f'<div style="font-family:\'IBM Plex Mono\',monospace; '
                             f'font-size:0.65rem; color:{count_color}; '
                             f'text-align:right; margin-top:0.25rem;">'
@@ -662,7 +650,7 @@ with tab2:
         )
         title_in = st.text_input(
             "Job Title",
-            placeholder="e.g. Quantitative Researcher Intern 2026",
+            placeholder="e.g. Quantitative Researcher",
             key="manual_title",
         )
         jd_in = st.text_area(
@@ -771,7 +759,6 @@ with tab3:
             unique_companies = history_df["Company"].nunique()
             st.metric("Unique Companies", unique_companies)
         with m3:
-            this_week = history_df[history_df["Date"] >= str(
-                date.today().isocalendar()[0]
-            )].shape[0] if rows else 0
-            st.metric("This Week", this_week)
+            week_ago  = (date.today() - timedelta(days=7)).isoformat()
+            this_week = int((history_df["Date"] >= week_ago).sum())
+            st.metric("Last 7 Days", this_week)

@@ -1,71 +1,41 @@
 # =============================================================================
 # job_bot.py  —  Module 1: Scraper Engine
-# Runs nightly via GitHub Actions. Scrapes job boards, deduplicates, filters
-# by master company list, writes results to Supabase, and emails an HTML digest.
+# Runs weekly via GitHub Actions. Scrapes job boards + ATS APIs, deduplicates,
+# filters by master company list, drops roles already sent in a previous digest,
+# writes the new ones to Supabase, and emails an HTML digest.
 # =============================================================================
 
-# FIX: Removed dead commented-out imports at the top of the file. All imports
-# are now handled in the safe try/except blocks below, as originally intended.
-import sys
-import time
+import html
+import os
 import random
 import re
+import smtplib
+import time
+from datetime import date
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+import pandas as pd
+import requests
+from jobspy import scrape_jobs
 
 print("---------- JOB BOT STARTING ----------", flush=True)
 
-# ── Standard library imports ──────────────────────────────────────────────────
-try:
-    import os
-    import smtplib
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
-    from datetime import date
-    print("✅ Standard libraries imported.", flush=True)
-except Exception as e:
-    print(f"❌ Failed to import standard libraries: {e}", flush=True)
-    sys.exit(1)
-
-# ── Pandas ────────────────────────────────────────────────────────────────────
-try:
-    import pandas as pd
-    print("✅ Pandas imported.", flush=True)
-except Exception as e:
-    print(f"❌ CRITICAL: Pandas failed to import. Check requirements.txt. Error: {e}", flush=True)
-    sys.exit(1)
-
-# ── JobSpy ────────────────────────────────────────────────────────────────────
-try:
-    from jobspy import scrape_jobs
-    print("✅ JobSpy imported.", flush=True)
-except Exception as e:
-    print(f"❌ CRITICAL: JobSpy failed to import. Error: {e}", flush=True)
-    sys.exit(1)
-
-# ── Supabase ──────────────────────────────────────────────────────────────────
-# FIX: Added Supabase client import. This replaces the CSV write-back approach.
-# The scraper now writes directly to the shared database that the Streamlit
-# dashboard reads from. Requires `supabase==2.4.0` in requirements.txt.
 try:
     from supabase import create_client
-    print("✅ Supabase client imported.", flush=True)
 except Exception as e:
-    # Non-fatal: if Supabase fails, we still send the email and log the error.
-    # This prevents a broken Supabase connection from killing the whole nightly run.
-    print(f"⚠️ WARNING: Supabase failed to import. Jobs will NOT be written to DB. Error: {e}", flush=True)
+    # Non-fatal: without Supabase we still email, but cannot dedup against history.
+    print(f"⚠️ Supabase failed to import — no DB write / history dedup. Error: {e}", flush=True)
     create_client = None
-
-# ── Requests (for Greenhouse & Lever ATS APIs) ────────────────────────────────
-try:
-    import requests
-    print("✅ Requests imported.", flush=True)
-except Exception as e:
-    print(f"⚠️ WARNING: Requests failed to import. Greenhouse/Lever scraping disabled. Error: {e}", flush=True)
-    requests = None
 
 
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
+
+# How far back jobspy searches. Matches the weekly cron schedule so no
+# postings fall through the gap between runs.
+HOURS_OLD = 7 * 24
 
 KEYWORDS = [
     # --- TIER 1: Core AI / ML Engineering ---
@@ -155,13 +125,8 @@ PRIORITY_COMPANIES = [
 #   Greenhouse : https://boards.greenhouse.io/{slug}/jobs       → 200 = valid
 #   Lever      : https://jobs.lever.co/{slug}                   → 200 = valid
 #   Ashby      : https://jobs.ashbyhq.com/{slug}                → loads = valid
-#                API: https://api.ashbyhq.com/posting-api/job-board/{slug}
-#
-# Slugs that returned persistent 404s have been removed. Add them back only
-# after manually confirming the correct slug and ATS platform.
 
 GREENHOUSE_COMPANIES = {
-    # Company display name   : Greenhouse board slug
     # Verified working as of March 2026
     "Anthropic":              "anthropic",
     "Airbnb":                 "airbnb",
@@ -177,25 +142,15 @@ GREENHOUSE_COMPANIES = {
     "Brex":                   "brex",
     "Scale AI":               "scaleai",
     "Verkada":                "verkada",
-    # Corrected slugs (were 404ing under wrong slug / wrong ATS)
     "Waymo":                  "Waymo",             # capital W required
-    "Anduril":                "andurilindustries",  # moved from Lever
+    "Anduril":                "andurilindustries",
 }
 
 LEVER_COMPANIES = {
-    # Company display name   : Lever posting slug
-    # Verified working as of March 2026
     "Zoox":                   "zoox",
-    # Add verified slugs here as you confirm them
 }
 
-# Ashby is the third major ATS, now used by many AI-first companies
-# that previously used Greenhouse or Lever.
-# API endpoint: GET https://api.ashbyhq.com/posting-api/job-board/{slug}
-# Returns: {"jobPostings": [{"title", "location": {"city","region"}, "jobUrl", ...}]}
 ASHBY_COMPANIES = {
-    # Company display name   : Ashby org slug
-    # Verified working as of March 2026
     "OpenAI":                 "openai",
     "Cohere":                 "cohere",
     "Replit":                 "replit",
@@ -203,85 +158,74 @@ ASHBY_COMPANIES = {
     "Perplexity":             "Perplexity",  # case-sensitive slug
 }
 
-# ── ATS Title Filtering ───────────────────────────────────────────────────────
-# A role must satisfy BOTH conditions to pass:
-#   1. Its title contains at least one DOMAIN keyword  (what the role is)
-#   2. Its title contains at least one INTERN marker   (confirms it's an internship)
-#
-# This prevents "Marketing Intern", "Legal Intern", "HR Intern", etc. from
-# slipping through just because "intern" appeared in the old flat keyword list.
 
-ATS_DOMAIN_KEYWORDS = [
-    # Core DS / ML
+# ── Title filtering ──────────────────────────────────────────────────────────
+# All matching is whole-word, so "intern" does not hit "Internal" and "iv"
+# does not hit "Generative".
+
+# ATS boards return every posting, so they are pre-filtered to the domain.
+# Prefix match (leading word boundary only) so "data engineer" also catches
+# "Data Engineering".
+DOMAIN_KEYWORDS = [
     "data science", "data scientist",
-    "machine learning", "ml engineer", "ml ",
+    "machine learning", "ml engineer", "ml",
     "applied scientist", "applied machine learning", "applied ml",
-    # AI / Research
     "artificial intelligence", "ai engineer", "ai infrastructure",
     "research scientist", "research engineer", "algorithm engineer",
-    # Quant / Finance
-    "quantitative", "quant ",
+    "quantitative", "quant",
     "decision science", "risk model", "financial engineer",
-    # Emerging AI
     "generative ai", "gen ai", "large language model", "llm",
     "natural language processing", "nlp",
     "computer vision", "deep learning",
-    # Infra / Eng
     "mlops", "ml ops", "data engineer",
-    # Domain-specific (Bio / Health)
     "biomedical", "computational biology", "imaging ai",
 ]
 
-# Titles that disqualify a role regardless of domain match.
-ATS_EXCLUDE_MARKERS = [
-    "phd", "ph.d", "doctorate", "doctoral",        # PhD-only roles
-    "intern", "internship", "co-op", "coop",       # internships
-    # Seniority signals — these titles indicate non-entry-level roles
-    "senior", "sr.", "sr ", "staff ", "principal ", "lead ", "leader",
-    "manager", "management", "director", "head of", "chief ",
-    "vice president", " vp ", "president",
-    "ii", "iii", "iv",                              # level suffixes (Engineer II/III)
+# Titles that disqualify a role from any source: PhD-only, internships, and
+# non-entry-level seniority.
+EXCLUDE_TITLE_TERMS = [
+    "phd", "ph.d", "doctorate", "doctoral",
+    "intern", "internship", "co-op", "coop",
+    "senior", "sr", "staff", "principal", "lead", "leader",
+    "manager", "management", "director", "head of", "chief",
+    "president", "vp",
+    "ii", "iii", "iv",
     "expert", "fellow", "architect",
 ]
 
-# ── Entry-Level Experience Filtering ──────────────────────────────────────────
-# The reliable entry-level signal lives in the job description, not the title.
-# We parse the stated years-of-experience requirement and reject anything above
-# the threshold. Roles with NO stated requirement are KEPT (often new-grad roles
-# that just say "Software Engineer").
-MAX_YEARS_EXPERIENCE = 3      # Reject roles requiring more than this many years
+
+def _word_regex(terms, suffix_boundary=True) -> re.Pattern:
+    """
+    Compiles terms into one case-insensitive whole-word alternation.
+    Lookarounds (not \\b) so terms starting/ending in punctuation still match.
+    """
+    body = "|".join(re.escape(t) for t in sorted(terms, key=len, reverse=True))
+    return re.compile(rf"(?<!\w)(?:{body})" + (r"(?!\w)" if suffix_boundary else ""), re.IGNORECASE)
+
+
+DOMAIN_RE  = _word_regex(DOMAIN_KEYWORDS, suffix_boundary=False)
+EXCLUDE_RE = _word_regex(EXCLUDE_TITLE_TERMS)
+
+# ── Entry-level experience filtering ──────────────────────────────────────────
+MAX_YEARS_EXPERIENCE   = 3     # Reject roles requiring more than this many years
 KEEP_IF_NO_REQUIREMENT = True  # Keep roles that state no experience requirement
 
+YEARS_PATTERNS = [re.compile(p) for p in (
+    r'(\d+)\+?\s*-\s*\d+\s*years?',          # "3-5 years" → 3
+    r'(\d+)\+\s*years?',                      # "5+ years"  → 5
+    r'minimum\s+of\s+(\d+)\s*years?',         # "minimum of 4 years"
+    r'at\s+least\s+(\d+)\s*years?',           # "at least 2 years"
+    r'(\d+)\s*years?\s+of\s+(?:relevant\s+)?(?:professional\s+)?experience',
+    r'(\d+)\s*\+?\s*yrs?',                    # "5+ yrs"
+)]
+# "must be at least 18 years of age" is not an experience requirement
+AGE_RE = re.compile(r'\d+\s*years?\s*(?:of\s+age|old)')
 
-# ── US Location Filtering ─────────────────────────────────────────────────────
-# Greenhouse and Lever serve global companies. We only want US-based roles.
-# Strategy:
-#   ACCEPT if location contains a US state abbreviation, a US state name,
-#           or a known US-positive term ("remote", "united states", etc.)
-#   REJECT  if location contains a known non-US city or country name
-#   ACCEPT  if location is blank/unknown (US company, likely US role — don't
-#           over-filter; Module 2 lets you review before acting anyway)
-
-US_STATE_ABBREVIATIONS = {
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
-}
-
-US_POSITIVE_TERMS = {
-    "remote", "united states", "usa", "u.s.a", "u.s.", " us ",
-    "anywhere", "nationwide", "hybrid",
-    # Full state names most likely to appear in location strings
-    "california", "new york", "texas", "washington", "illinois",
-    "massachusetts", "georgia", "colorado", "florida", "virginia",
-    "north carolina", "pennsylvania", "utah", "oregon", "arizona",
-    "new jersey", "michigan", "ohio", "minnesota", "indiana",
-}
-
-# If ANY of these appear in the location string, reject the role outright.
-NON_US_TERMS = {
+# ── US location filtering ─────────────────────────────────────────────────────
+# Roles are kept unless the location names a known non-US place. Blank or
+# unrecognized locations are kept (better to over-include; the dashboard lets
+# you reject). Whole-word match so "india" ≠ "Indiana", "uk" ≠ "Milwaukee".
+NON_US_TERMS = [
     "canada", "toronto", "vancouver", "montreal", "ottawa",
     "united kingdom", "uk", "england", "london", "manchester", "edinburgh",
     "ireland", "dublin",
@@ -301,184 +245,426 @@ NON_US_TERMS = {
     "spain", "madrid", "barcelona",
     "poland", "warsaw",
     "czech", "prague",
-}
+]
+NON_US_RE = _word_regex(NON_US_TERMS)
 
 
 # =============================================================================
 # HELPERS
 # =============================================================================
 
-def load_fortune_1000(filename="fortune1000.csv") -> set:
-    """
-    Loads Fortune 1000 companies from the CSV committed to the repo root.
-    Returns a set of company name strings.
-    Falls back gracefully to an empty set if the file can't be read.
-    """
-    companies = set()
+def _normalize_company(name: str) -> str:
+    return re.sub(r"\s+", " ", name.lower().replace(".", "").replace(",", "")).strip()
+
+
+PRIORITY_RE = _word_regex([_normalize_company(p) for p in PRIORITY_COMPANIES])
+
+
+def is_priority(company: str) -> bool:
+    return bool(PRIORITY_RE.search(_normalize_company(company)))
+
+
+def load_fortune_1000(filename: str = "fortune1000.csv") -> set:
+    """Loads company names from the Fortune 1000 CSV; empty set on failure."""
     try:
         try:
             df = pd.read_csv(filename, encoding="utf-8")
         except UnicodeDecodeError:
-            print("⚠️ UTF-8 failed for fortune1000.csv, trying Latin-1...", flush=True)
             df = pd.read_csv(filename, encoding="latin1")
-
         df.columns = [c.lower().strip() for c in df.columns]
-
-        if "company" in df.columns:
-            companies.update(df["company"].dropna().astype(str).tolist())
-        elif "name" in df.columns:
-            companies.update(df["name"].dropna().astype(str).tolist())
-
+        col = "company" if "company" in df.columns else "name"
+        companies = set(df[col].dropna().astype(str))
         print(f"✅ Loaded {len(companies)} companies from {filename}.", flush=True)
+        return companies
     except Exception as e:
-        print(f"⚠️ Could not load {filename}: {e}", flush=True)
-        print("   Continuing with PRIORITY_COMPANIES list only.", flush=True)
-
-    return companies
+        print(f"⚠️ Could not load {filename}: {e} — using PRIORITY_COMPANIES only.", flush=True)
+        return set()
 
 
-def get_master_company_list() -> list:
-    """Merges the hardcoded priority list with the Fortune 1000 CSV."""
-    fortune_list = load_fortune_1000()
-    master_list = set(PRIORITY_COMPANIES) | fortune_list
-    print(f"✅ Master company list ready: {len(master_list)} companies.", flush=True)
-    return list(master_list)
-
-
-def is_high_quality(job_company: str, master_list: list) -> bool:
+class CompanyMatcher:
     """
-    Returns True if job_company fuzzy-matches any entry in master_list.
-    Catches variants like 'Walmart Global Tech' matching 'Walmart'.
-    Also drops rows where company is NaN/None to prevent downstream type errors.
+    Whole-word company matching against the master list, built once.
+
+    A job's company matches if either:
+      - a master name appears as whole words inside it
+        ("Walmart Global Tech" ⊇ "Walmart"), or
+      - it is a leading word-prefix of a master name
+        ("Capital One" ⊆ "Capital One Financial").
     """
-    # FIX: Explicit NaN/None guard. jobspy occasionally returns NaN company names
-    # from partially scraped postings. These caused crashes in the original code.
-    if not job_company or not isinstance(job_company, str):
-        return False
 
-    job_norm = job_company.lower().replace(".", "").replace(",", "").strip()
-    if not job_norm:
-        return False
+    def __init__(self, names):
+        normalized = {n for n in (_normalize_company(x) for x in names) if n}
+        self._contains_re = _word_regex(normalized)
+        self._prefixes = set()
+        for n in normalized:
+            words = n.split()
+            for i in range(1, len(words) + 1):
+                self._prefixes.add(" ".join(words[:i]))
+        print(f"✅ Master company list ready: {len(normalized)} companies.", flush=True)
 
-    for safe_company in master_list:
-        if not isinstance(safe_company, str):
+    def matches(self, company) -> bool:
+        if not isinstance(company, str):
+            return False
+        norm = _normalize_company(company)
+        return bool(norm) and (norm in self._prefixes or bool(self._contains_re.search(norm)))
+
+
+def _title_excluded(title: str) -> bool:
+    return bool(EXCLUDE_RE.search(title))
+
+
+def _is_us_location(location: str) -> bool:
+    loc = (location or "").lower().replace("new mexico", "")
+    return not NON_US_RE.search(loc)
+
+
+def _parse_min_years_required(text: str) -> int | None:
+    """
+    Returns the smallest stated years-of-experience requirement in the text
+    (the most lenient reading, e.g. "3-5 years" → 3), or None if none stated.
+    """
+    if not text:
+        return None
+    t = AGE_RE.sub("", text.lower())
+    found = [
+        int(m.group(1))
+        for pat in YEARS_PATTERNS
+        for m in pat.finditer(t)
+        if 0 <= int(m.group(1)) <= 20
+    ]
+    return min(found) if found else None
+
+
+def _is_entry_level(title: str, description: str) -> bool:
+    required = _parse_min_years_required(f"{title} {description}")
+    if required is None:
+        return KEEP_IF_NO_REQUIREMENT
+    return required <= MAX_YEARS_EXPERIENCE
+
+
+def _html_to_text(raw: str) -> str:
+    """Greenhouse 'content' is entity-escaped HTML; reduce it to plain text."""
+    text = html.unescape(raw or "")
+    text = re.sub(r"<[^>]+>", " ", text)
+    return re.sub(r"\s+", " ", html.unescape(text)).strip()
+
+
+# =============================================================================
+# SCRAPERS
+# =============================================================================
+
+def scrape_jobspy() -> list:
+    """LinkedIn / Indeed / Google Jobs via jobspy, in keyword batches."""
+    all_jobs = []
+    chunk_size = 4
+    batches = [KEYWORDS[i:i + chunk_size] for i in range(0, len(KEYWORDS), chunk_size)]
+    print(f"Scraping jobspy in {len(batches)} batches...", flush=True)
+
+    for i, batch in enumerate(batches):
+        print(f"  - Batch {i+1}/{len(batches)}: {batch}", flush=True)
+        if i > 0:
+            # Randomized sleep between batches to avoid WAF 403 blocks.
+            sleep_time = random.uniform(15, 35)
+            print(f"    ...sleeping {int(sleep_time)}s...", flush=True)
+            time.sleep(sleep_time)
+
+        try:
+            jobs = scrape_jobs(
+                # glassdoor / zip_recruiter removed: they WAF-block every request.
+                site_name=["linkedin", "indeed", "google"],
+                search_term=" OR ".join(batch),
+                location="United States",
+                results_wanted=50,
+                hours_old=HOURS_OLD,
+            )
+        except Exception as e:
+            print(f"    ❌ Error in batch {i+1}: {e}", flush=True)
             continue
-        safe_norm = safe_company.lower().replace(".", "").replace(",", "").strip()
-        if safe_norm and (safe_norm in job_norm or job_norm in safe_norm):
-            return True
 
-    return False
+        if jobs is None or jobs.empty:
+            print(f"    ⚠️ No results for batch {i+1}.", flush=True)
+            continue
+
+        # Convert NaN → None so `x or fallback` works on missing fields.
+        jobs = jobs.astype(object).where(jobs.notna(), None)
+        print(f"    ✅ Got {len(jobs)} results.", flush=True)
+        all_jobs.extend(jobs.to_dict("records"))
+
+    print(f"jobspy total: {len(all_jobs)}", flush=True)
+    return all_jobs
+
+
+def _parse_greenhouse(data) -> list:
+    return [
+        (j.get("title"), (j.get("location") or {}).get("name"),
+         j.get("absolute_url"), _html_to_text(j.get("content", "")))
+        for j in data.get("jobs", [])
+    ]
+
+
+def _parse_lever(data) -> list:
+    if not isinstance(data, list):
+        raise ValueError("unexpected response format")
+    return [
+        (j.get("text"), (j.get("categories") or {}).get("location"),
+         j.get("hostedUrl"), j.get("descriptionPlain"))
+        for j in data
+    ]
+
+
+def _parse_ashby(data) -> list:
+    out = []
+    for j in data.get("jobPostings", []):
+        if not j.get("isListed", True):
+            continue
+        loc = j.get("locationName") or ""
+        if not loc:
+            loc_obj = j.get("location") or {}
+            if isinstance(loc_obj, dict):
+                city = loc_obj.get("locationName") or loc_obj.get("city", "")
+                loc = ", ".join(filter(None, [city, loc_obj.get("region", "")]))
+            elif isinstance(loc_obj, str):
+                loc = loc_obj
+        out.append((j.get("title"), loc, j.get("jobUrl") or j.get("applyUrl"),
+                    j.get("descriptionPlain")))
+    return out
+
+
+ATS_SOURCES = [
+    # (site label, companies, URL template, parser)
+    ("greenhouse", GREENHOUSE_COMPANIES,
+     "https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true", _parse_greenhouse),
+    ("lever", LEVER_COMPANIES,
+     "https://api.lever.co/v0/postings/{slug}?mode=json", _parse_lever),
+    ("ashby", ASHBY_COMPANIES,
+     "https://api.ashbyhq.com/posting-api/job-board/{slug}", _parse_ashby),
+]
+
+
+def scrape_ats(site: str, companies: dict, url_template: str, parse, timeout: int = 15) -> list:
+    """
+    Queries one ATS's public job-board API for each company and returns
+    domain-relevant, US-located postings in the same shape as jobspy rows.
+    """
+    results = []
+    print(f"\n🔎 Scraping {site} for {len(companies)} companies...", flush=True)
+
+    for company, slug in companies.items():
+        try:
+            resp = requests.get(url_template.format(slug=slug), timeout=timeout)
+            if resp.status_code != 200:
+                print(f"  ⚠️  {company}: HTTP {resp.status_code} for slug '{slug}'", flush=True)
+                continue
+            postings = parse(resp.json())
+        except Exception as e:
+            print(f"  ❌ {company}: {e}", flush=True)
+            continue
+
+        matched = 0
+        for title, loc, url, desc in postings:
+            title = str(title or "")
+            loc = str(loc or "").strip() or "Unknown"
+            if not DOMAIN_RE.search(title) or not _is_us_location(loc):
+                continue
+            results.append({
+                "title":       title,
+                "company":     company,
+                "location":    loc,
+                "site":        site,
+                "job_url":     url or "",
+                "description": str(desc or "").strip(),
+            })
+            matched += 1
+        print(f"  → {company}: {matched}/{len(postings)} postings matched.", flush=True)
+
+    print(f"{site} total: {len(results)} roles.", flush=True)
+    return results
 
 
 # =============================================================================
-# SUPABASE WRITER
+# DEDUP + FILTER
 # =============================================================================
 
-def write_to_supabase(filtered_jobs: list) -> None:
-    """
-    Upserts filtered jobs into the Supabase pending_jobs table.
+def _job_key(company: str, title: str) -> tuple:
+    return (company.strip().lower(), title.strip().lower())
 
-    Uses SUPABASE_URL and SUPABASE_SERVICE_KEY from environment variables.
-    The service key bypasses Row Level Security so the GitHub Actions runner
-    can write without needing user auth.
 
-    Uses upsert with ignore_duplicates=True on the (company, title) unique
-    constraint so re-runs don't overwrite a user's status changes from the
-    Streamlit dashboard (e.g., a role they already marked as 'targeted').
-    """
+def condense_jobs(all_jobs: list) -> list:
+    """Merges the same company+title seen in multiple cities/sources into one row."""
+    condensed: dict = {}
+    for job in all_jobs:
+        company = str(job.get("company") or "").strip()
+        title   = str(job.get("title") or "").strip()
+        if not company or not title:
+            continue
+
+        loc = str(job.get("location") or "").strip() or "Unknown"
+        key = _job_key(company, title)
+
+        if key not in condensed:
+            row = dict(job, company=company, title=title)
+            row["job_url"] = str(job.get("job_url") or job.get("job_url_direct") or "").strip()
+            row["_locations"] = [] if loc == "Unknown" else [loc]
+            condensed[key] = row
+        else:
+            row = condensed[key]
+            if loc != "Unknown" and loc not in row["_locations"]:
+                row["_locations"].append(loc)
+            # Prefer a source that came with a description.
+            if not row.get("description") and job.get("description"):
+                row["description"] = job["description"]
+
+    for row in condensed.values():
+        row["location"] = " | ".join(row.pop("_locations")) or "Unknown"
+    return list(condensed.values())
+
+
+def filter_jobs(jobs: list, matcher: CompanyMatcher) -> list:
+    """Company quality → title exclusion → years-of-experience."""
+    kept = []
+    n_company = n_title = n_exp = 0
+    for j in jobs:
+        if not matcher.matches(j["company"]):
+            n_company += 1
+        elif _title_excluded(j["title"]):
+            n_title += 1
+        elif not _is_entry_level(j["title"], str(j.get("description") or "")):
+            n_exp += 1
+        else:
+            kept.append(j)
+    print(
+        f"After filters: {len(kept)} matches (excluded — company-miss: {n_company}, "
+        f"title/seniority: {n_title}, experience: {n_exp}).",
+        flush=True,
+    )
+    return kept
+
+
+# =============================================================================
+# SUPABASE — history dedup + write
+# =============================================================================
+
+def get_supabase():
     if create_client is None:
-        print("⚠️ Supabase unavailable — skipping DB write.", flush=True)
-        return
+        return None
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_KEY")
+    if not url or not key:
+        print("⚠️ SUPABASE_URL / SUPABASE_SERVICE_KEY not set — no DB write / history dedup.", flush=True)
+        return None
+    try:
+        return create_client(url, key)
+    except Exception as e:
+        print(f"⚠️ Supabase client failed: {e}", flush=True)
+        return None
 
-    supabase_url = os.environ.get("SUPABASE_URL")
-    supabase_key = os.environ.get("SUPABASE_SERVICE_KEY")
 
-    if not supabase_url or not supabase_key:
-        print("⚠️ SUPABASE_URL or SUPABASE_SERVICE_KEY not set — skipping DB write.", flush=True)
-        return
+def fetch_seen(client) -> tuple[set, set] | None:
+    """
+    Returns (seen company+title keys, seen job URLs) for every job ever written
+    to pending_jobs — i.e. everything already included in a previous digest,
+    plus manual and rejected entries. Paginates past Supabase's 1000-row cap.
+    Returns None if the lookup fails.
+    """
+    seen_keys, seen_urls = set(), set()
+    page = 1000
+    try:
+        start = 0
+        while True:
+            rows = (
+                client.table("pending_jobs")
+                .select("company,title,job_url")
+                .range(start, start + page - 1)
+                .execute()
+                .data or []
+            )
+            for r in rows:
+                seen_keys.add(_job_key(r.get("company") or "", r.get("title") or ""))
+                if r.get("job_url"):
+                    seen_urls.add(r["job_url"].strip())
+            if len(rows) < page:
+                break
+            start += page
+    except Exception as e:
+        print(f"⚠️ Could not load job history: {e}", flush=True)
+        return None
+    print(f"✅ Loaded {len(seen_keys)} previously seen jobs from Supabase.", flush=True)
+    return seen_keys, seen_urls
+
+
+def drop_seen(jobs: list, seen: tuple[set, set]) -> list:
+    seen_keys, seen_urls = seen
+    new = [
+        j for j in jobs
+        if _job_key(j["company"], j["title"]) not in seen_keys
+        and (not j["job_url"] or j["job_url"] not in seen_urls)
+    ]
+    print(f"After history dedup: {len(new)} new roles ({len(jobs) - len(new)} already sent).", flush=True)
+    return new
+
+
+def write_to_supabase(client, jobs: list) -> None:
+    """
+    Upserts jobs into pending_jobs. ignore_duplicates on (company, title)
+    preserves status changes made in the dashboard.
+    """
+    today = date.today().isoformat()
+    records = [{
+        "scraped_date": today,
+        "title":        j["title"],
+        "company":      j["company"],
+        "location":     j["location"],
+        "site":         str(j.get("site") or "Unknown"),
+        "job_url":      j["job_url"],
+        "description":  str(j.get("description") or "").strip(),
+        "is_priority":  is_priority(j["company"]),
+        "source":       "scraper",
+        "status":       "pending",
+    } for j in jobs]
 
     try:
-        client = create_client(supabase_url, supabase_key)
-
-        records = []
-        today = date.today().isoformat()
-
-        for job in filtered_jobs:
-            company = str(job.get("company") or "Unknown").strip()
-            is_priority = any(
-                p.lower() in company.lower() for p in PRIORITY_COMPANIES
-            )
-
-            # Preserve the description field for Module 3's NLP extraction.
-            # jobspy returns this when available — we must not drop it.
-            description = str(job.get("description") or "").strip()
-
-            records.append({
-                "scraped_date": today,
-                "title":        str(job.get("title") or "Unknown").strip(),
-                "company":      company,
-                "location":     str(job.get("location") or "Unknown").strip(),
-                "site":         str(job.get("site") or "Unknown").strip(),
-                "job_url":      str(job.get("job_url") or job.get("job_url_direct") or "").strip(),
-                "description":  description,
-                "is_priority":  is_priority,
-                "source":       "scraper",
-                "status":       "pending",
-            })
-
-        if not records:
-            print("⚠️ No records to write to Supabase.", flush=True)
-            return
-
-        # ignore_duplicates=True: if (company, title) already exists in the table,
-        # skip silently. This preserves any status changes the user made in the dashboard.
         client.table("pending_jobs").upsert(
-            records,
-            on_conflict="company,title",
-            ignore_duplicates=True,
+            records, on_conflict="company,title", ignore_duplicates=True,
         ).execute()
-
-        print(f"✅ Wrote {len(records)} jobs to Supabase pending_jobs table.", flush=True)
-
+        print(f"✅ Wrote {len(records)} jobs to Supabase.", flush=True)
     except Exception as e:
-        # Non-fatal: a DB write failure should not prevent the email from sending.
-        print(f"⚠️ Supabase write failed: {e}", flush=True)
+        print(f"⚠️ Supabase write failed (these jobs may be re-sent next week): {e}", flush=True)
 
 
 # =============================================================================
-# EMAIL SENDER
+# EMAIL
 # =============================================================================
 
 def send_email(jobs: list) -> None:
-    """
-    Sends an HTML digest email of today's filtered jobs.
-    Priority companies are highlighted in gold; Fortune 1000 matches in green.
-    Jobs are sorted alphabetically by company name.
-    """
+    """HTML digest; priority companies in gold, Fortune 1000 matches in green."""
     sender_email    = os.environ.get("EMAIL_USER")
     sender_password = os.environ.get("EMAIL_PASS")
-    # FIX: Receiver email is now pulled from an environment secret instead of
-    # being hardcoded. Falls back to the original address so existing runs
-    # don't break if the secret hasn't been added yet.
     receiver_email  = os.environ.get("EMAIL_RECEIVER", "rishpotti@gmail.com")
 
     if not sender_email or not sender_password:
         print("❌ EMAIL_USER or EMAIL_PASS not set — skipping email.", flush=True)
         return
 
+    esc = lambda v: html.escape(str(v or "Unknown"))
     today_str = date.today().strftime("%B %d, %Y")
-    msg = MIMEMultipart()
-    msg["Subject"] = f"🚀 Daily Job Digest ({today_str}): {len(jobs)} Roles Found"
-    msg["From"]    = sender_email
-    msg["To"]      = receiver_email
 
-    # ── Build HTML table ──────────────────────────────────────────────────────
+    rows = []
+    for job in sorted(jobs, key=lambda x: x["company"].lower()):
+        style = ("background-color: #fff3cd; font-weight: bold;" if is_priority(job["company"])
+                 else "background-color: #e6fffa;")
+        link = job["job_url"]
+        apply_cell = f'<a href="{html.escape(link, quote=True)}">Apply</a>' if link else "N/A"
+        rows.append(
+            f'<tr style="{style}"><td>{esc(job["company"])}</td><td>{esc(job["title"])}</td>'
+            f'<td>{esc(job["location"])}</td><td>{esc(job.get("site"))}</td><td>{apply_cell}</td></tr>'
+        )
+
     html_content = f"""
     <html>
     <body style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
-    <h2>📋 Daily Internship Digest — {today_str}</h2>
+    <h2>📋 Weekly Job Digest — {today_str}</h2>
     <p>
-      <strong>{len(jobs)} unique roles</strong> matched your company list today.
+      <strong>{len(jobs)} new roles</strong> since the last digest.
       <span style="color: #856404; font-weight: bold;">🟡 Gold = Priority company.</span>
       <span style="color: #0f5132;">🟢 Green = Fortune 1000 match.</span><br>
       Log into the <strong>Job Hunter Dashboard</strong> to target roles for enrichment.
@@ -486,43 +672,18 @@ def send_email(jobs: list) -> None:
     <table border="1" cellpadding="6" cellspacing="0"
            style="border-collapse: collapse; width: 100%; font-size: 13px;">
       <tr style="background-color: #f2f2f2; text-align: left;">
-        <th>Company</th>
-        <th>Role</th>
-        <th>Location(s)</th>
-        <th>Source</th>
-        <th>Link</th>
+        <th>Company</th><th>Role</th><th>Location(s)</th><th>Source</th><th>Link</th>
       </tr>
-    """
-
-    # Sort alphabetically by company for easy scanning
-    jobs_sorted = sorted(jobs, key=lambda x: str(x.get("company", "")).lower())
-
-    for job in jobs_sorted:
-        company = str(job.get("company") or "Unknown")
-
-        if any(p.lower() in company.lower() for p in PRIORITY_COMPANIES):
-            row_style = "background-color: #fff3cd; font-weight: bold;"   # Gold
-        else:
-            row_style = "background-color: #e6fffa;"                      # Green
-
-        link = job.get("job_url") or job.get("job_url_direct") or "#"
-        apply_cell = f'<a href="{link}">Apply</a>' if link != "#" else "N/A"
-
-        html_content += f"""
-      <tr style="{row_style}">
-        <td>{company}</td>
-        <td>{job.get("title", "Unknown")}</td>
-        <td>{job.get("location", "Unknown")}</td>
-        <td>{job.get("site", "Unknown")}</td>
-        <td>{apply_cell}</td>
-      </tr>"""
-
-    html_content += """
+      {''.join(rows)}
     </table>
     </body>
     </html>
     """
 
+    msg = MIMEMultipart()
+    msg["Subject"] = f"🚀 Weekly Job Digest ({today_str}): {len(jobs)} New Roles"
+    msg["From"]    = sender_email
+    msg["To"]      = receiver_email
     msg.attach(MIMEText(html_content, "html"))
 
     try:
@@ -535,509 +696,39 @@ def send_email(jobs: list) -> None:
 
 
 # =============================================================================
-# ATS SCRAPERS — Greenhouse & Lever
-# =============================================================================
-
-def _title_is_relevant(title: str) -> bool:
-    """
-    Returns True if the title is a relevant full-time DS/ML/AI/SWE role.
-
-    Rules (applied in order):
-      1. Reject if title contains any ATS_EXCLUDE_MARKER — PhD-only, internship,
-         or too-senior roles are filtered out immediately.
-      2. Accept if title contains any ATS_DOMAIN_KEYWORD.
-    """
-    t = title.lower()
-    if any(m in t for m in ATS_EXCLUDE_MARKERS):
-        return False
-    return any(kw in t for kw in ATS_DOMAIN_KEYWORDS)
-
-
-def _is_us_location(location: str) -> bool:
-    """
-    Returns True if the location string is consistent with a US-based role.
-
-    Logic (checked in order):
-      1. Blank / unknown → True  (US company; include and let the dashboard filter)
-      2. Contains a non-US term → False
-      3. Contains a US state abbreviation as a standalone token → True
-      4. Contains a US positive term → True
-      5. Default → True  (unknown format; err on the side of inclusion)
-    """
-    if not location or location.strip().lower() in ("unknown", "none", ""):
-        return True
-
-    loc = location.lower()
-
-    # Hard reject on any known non-US geography
-    if any(term in loc for term in NON_US_TERMS):
-        return False
-
-    # Accept on any US positive indicator
-    if any(term in loc for term in US_POSITIVE_TERMS):
-        return True
-
-    # Check for state abbreviations as standalone tokens
-    # e.g. "San Francisco, CA" → tokens include "CA"
-    tokens = {t.strip("(),. ").upper() for t in location.replace(",", " ").split()}
-    if tokens & US_STATE_ABBREVIATIONS:
-        return True
-
-    # Unknown format — include rather than over-filter
-    return True
-
-
-def _parse_max_years_required(text: str) -> int | None:
-    """
-    Parses a job title + description for a stated years-of-experience requirement.
-    Returns the MINIMUM years the role requires (the lower bound of any range),
-    or None if no requirement is stated.
-
-    Handles patterns like:
-      "5+ years"            → 5
-      "3-5 years"           → 3   (lower bound)
-      "minimum of 4 years"  → 4
-      "at least 2 years"    → 2
-      "5 years of experience" → 5
-    Ignores matches clearly unrelated to experience (e.g. "10 years ago").
-    """
-    if not text:
-        return None
-
-    t = text.lower()
-
-    # Common experience-requirement patterns. Each captures the first number.
-    patterns = [
-        r'(\d+)\+?\s*-\s*\d+\s*years?',          # "3-5 years" → 3
-        r'(\d+)\+\s*years?',                      # "5+ years"  → 5
-        r'minimum\s+of\s+(\d+)\s*years?',         # "minimum of 4 years"
-        r'at\s+least\s+(\d+)\s*years?',           # "at least 2 years"
-        r'(\d+)\s*years?\s+of\s+(?:relevant\s+)?(?:professional\s+)?experience',
-        r'(\d+)\s*\+?\s*yrs?',                    # "5+ yrs"
-    ]
-
-    found_years = []
-    for pat in patterns:
-        for m in re.finditer(pat, t):
-            try:
-                yrs = int(m.group(1))
-                # Sanity bound — ignore absurd matches like "100 years"
-                if 0 <= yrs <= 20:
-                    found_years.append(yrs)
-            except (ValueError, IndexError):
-                continue
-
-    if not found_years:
-        return None
-
-    # Return the smallest stated requirement — the most lenient interpretation
-    return min(found_years)
-
-
-def _is_entry_level(title: str, description: str) -> bool:
-    """
-    Decides whether a role is entry-level enough to keep.
-
-    1. Parse years-of-experience requirement from title + description.
-    2. If a requirement is found and exceeds MAX_YEARS_EXPERIENCE → reject.
-    3. If no requirement is found → keep or drop based on KEEP_IF_NO_REQUIREMENT.
-
-    Title-based seniority (Senior, Staff, etc.) is already handled separately
-    by the exclusion-marker filter, so this focuses purely on the years signal.
-    """
-    combined = f"{title} {description}"
-    required = _parse_max_years_required(combined)
-
-    if required is None:
-        return KEEP_IF_NO_REQUIREMENT
-
-    return required <= MAX_YEARS_EXPERIENCE
-
-
-def scrape_greenhouse(timeout: int = 10) -> list:
-    """
-    Queries the public Greenhouse job board API for every company in
-    GREENHOUSE_COMPANIES and returns matching internship roles as a list
-    of normalized job dicts (same shape as jobspy output).
-
-    Greenhouse endpoint (no auth required):
-      GET https://boards-api.greenhouse.io/v1/boards/{slug}/jobs
-      Returns: { "jobs": [ { "id", "title", "location": {"name"}, "absolute_url" } ] }
-    """
-    if requests is None:
-        print("⚠️ Requests not available — skipping Greenhouse scrape.", flush=True)
-        return []
-
-    results = []
-    print(f"\n🌿 Scraping Greenhouse for {len(GREENHOUSE_COMPANIES)} companies...", flush=True)
-
-    for company_name, slug in GREENHOUSE_COMPANIES.items():
-        try:
-            url = f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
-            resp = requests.get(url, timeout=timeout)
-
-            if resp.status_code == 404:
-                print(f"  ⚠️  {company_name}: slug '{slug}' not found (404) — update GREENHOUSE_COMPANIES.", flush=True)
-                continue
-            if resp.status_code != 200:
-                print(f"  ⚠️  {company_name}: HTTP {resp.status_code}", flush=True)
-                continue
-
-            jobs = resp.json().get("jobs", [])
-            matched = 0
-
-            for job in jobs:
-                title = str(job.get("title", ""))
-                if not _title_is_relevant(title):
-                    continue
-
-                location = job.get("location", {})
-                loc_str = location.get("name", "Unknown") if isinstance(location, dict) else "Unknown"
-
-                if not _is_us_location(loc_str):
-                    continue
-
-                results.append({
-                    "title":       title,
-                    "company":     company_name,
-                    "location":    loc_str,
-                    "site":        "greenhouse",
-                    "job_url":     job.get("absolute_url", ""),
-                    "description": "",   # Full description requires a second per-job API call;
-                                         # left blank here and fetched by Module 3 during enrichment.
-                })
-                matched += 1
-
-            if matched:
-                print(f"  ✅ {company_name}: {matched} matching role(s).", flush=True)
-
-        except requests.exceptions.Timeout:
-            print(f"  ⚠️  {company_name}: request timed out.", flush=True)
-        except Exception as e:
-            print(f"  ❌ {company_name}: unexpected error — {e}", flush=True)
-
-    print(f"🌿 Greenhouse total: {len(results)} roles.", flush=True)
-    return results
-
-
-def scrape_lever(timeout: int = 10) -> list:
-    """
-    Queries the public Lever job board API for every company in
-    LEVER_COMPANIES and returns matching internship roles as a list
-    of normalized job dicts (same shape as jobspy output).
-
-    Lever endpoint (no auth required):
-      GET https://api.lever.co/v0/postings/{slug}?mode=json
-      Returns: [ { "text" (title), "categories": {"location"}, "hostedUrl", "descriptionPlain" } ]
-    """
-    if requests is None:
-        print("⚠️ Requests not available — skipping Lever scrape.", flush=True)
-        return []
-
-    results = []
-    print(f"\n🔧 Scraping Lever for {len(LEVER_COMPANIES)} companies...", flush=True)
-
-    for company_name, slug in LEVER_COMPANIES.items():
-        try:
-            url = f"https://api.lever.co/v0/postings/{slug}?mode=json"
-            resp = requests.get(url, timeout=timeout)
-
-            if resp.status_code == 404:
-                print(f"  ⚠️  {company_name}: slug '{slug}' not found (404) — update LEVER_COMPANIES.", flush=True)
-                continue
-            if resp.status_code != 200:
-                print(f"  ⚠️  {company_name}: HTTP {resp.status_code}", flush=True)
-                continue
-
-            jobs = resp.json()
-            if not isinstance(jobs, list):
-                print(f"  ⚠️  {company_name}: unexpected response format.", flush=True)
-                continue
-
-            matched = 0
-
-            for job in jobs:
-                title = str(job.get("text", ""))
-                if not _title_is_relevant(title):
-                    continue
-
-                categories = job.get("categories", {})
-                loc_str = categories.get("location", "Unknown") if isinstance(categories, dict) else "Unknown"
-
-                if not _is_us_location(loc_str):
-                    continue
-
-                # Lever provides plain-text description inline — pass it through
-                # so Module 3 has text to extract from without a second fetch.
-                description = str(job.get("descriptionPlain", "")).strip()
-
-                results.append({
-                    "title":       title,
-                    "company":     company_name,
-                    "location":    loc_str or "Unknown",
-                    "site":        "lever",
-                    "job_url":     job.get("hostedUrl", ""),
-                    "description": description,
-                })
-                matched += 1
-
-            if matched:
-                print(f"  ✅ {company_name}: {matched} matching role(s).", flush=True)
-
-        except requests.exceptions.Timeout:
-            print(f"  ⚠️  {company_name}: request timed out.", flush=True)
-        except Exception as e:
-            print(f"  ❌ {company_name}: unexpected error — {e}", flush=True)
-
-    print(f"🔧 Lever total: {len(results)} roles.", flush=True)
-    return results
-
-
-def scrape_ashby(timeout: int = 10) -> list:
-    """
-    Queries the public Ashby job board API for every company in ASHBY_COMPANIES.
-    Returns matching internship roles as normalized job dicts.
-
-    Ashby API endpoint (no auth required):
-      GET https://api.ashbyhq.com/posting-api/job-board/{slug}
-
-    Ashby returns location as a flat string field 'locationName' (e.g. "San Francisco, CA")
-    NOT as a nested object. The 'location' nested field only exists in some versions.
-    We check both to be safe.
-
-    Only returns listings where isListed=true (publicly visible roles).
-    """
-    if requests is None:
-        print("⚠️ Requests not available — skipping Ashby scrape.", flush=True)
-        return []
-
-    results = []
-    print(f"\n🔷 Scraping Ashby for {len(ASHBY_COMPANIES)} companies...", flush=True)
-
-    for company_name, slug in ASHBY_COMPANIES.items():
-        try:
-            url = f"https://api.ashbyhq.com/posting-api/job-board/{slug}"
-            resp = requests.get(url, timeout=timeout)
-
-            if resp.status_code == 404:
-                print(f"  ⚠️  {company_name}: slug '{slug}' not found (404) — update ASHBY_COMPANIES.", flush=True)
-                continue
-            if resp.status_code != 200:
-                print(f"  ⚠️  {company_name}: HTTP {resp.status_code}", flush=True)
-                continue
-
-            data     = resp.json()
-            postings = data.get("jobPostings", [])
-            print(f"  → {company_name}: {len(postings)} total postings found.", flush=True)
-            matched  = 0
-
-            for job in postings:
-                # Skip unlisted / internal roles
-                if not job.get("isListed", True):
-                    continue
-
-                title = str(job.get("title", ""))
-                if not _title_is_relevant(title):
-                    continue
-
-                # Ashby returns location as a flat string in 'locationName'.
-                # Some versions also have a nested 'location' dict — check both.
-                loc_str = ""
-                loc_name = job.get("locationName", "")
-                if loc_name:
-                    loc_str = str(loc_name)
-                else:
-                    loc_obj = job.get("location") or {}
-                    if isinstance(loc_obj, dict):
-                        city   = loc_obj.get("locationName") or loc_obj.get("city", "")
-                        region = loc_obj.get("region", "")
-                        loc_str = ", ".join(filter(None, [city, region]))
-                    elif isinstance(loc_obj, str):
-                        loc_str = loc_obj
-
-                loc_str = loc_str.strip() or "Unknown"
-
-                if not _is_us_location(loc_str):
-                    continue
-
-                # Ashby provides full description as HTML in 'descriptionHtml'
-                # and plain text in 'descriptionPlain' — prefer plain text.
-                description = str(job.get("descriptionPlain", "")).strip()
-
-                results.append({
-                    "title":       title,
-                    "company":     company_name,
-                    "location":    loc_str,
-                    "site":        "ashby",
-                    "job_url":     job.get("jobUrl", "") or job.get("applyUrl", ""),
-                    "description": description,
-                })
-                matched += 1
-
-            if matched:
-                print(f"  ✅ {company_name}: {matched} matching role(s).", flush=True)
-            elif postings:
-                print(f"  — {company_name}: {len(postings)} postings, none matched title/location filter.", flush=True)
-
-        except requests.exceptions.Timeout:
-            print(f"  ⚠️  {company_name}: request timed out.", flush=True)
-        except Exception as e:
-            print(f"  ❌ {company_name}: unexpected error — {e}", flush=True)
-
-    print(f"🔷 Ashby total: {len(results)} roles.", flush=True)
-    return results
-
-
-# =============================================================================
 # MAIN
 # =============================================================================
 
 def main():
-    print("Loading company lists...", flush=True)
-    master_safe_list = get_master_company_list()
+    matcher = CompanyMatcher(set(PRIORITY_COMPANIES) | load_fortune_1000())
 
-    all_jobs = []
+    all_jobs = scrape_jobspy()
+    for source in ATS_SOURCES:
+        all_jobs.extend(scrape_ats(*source))
+    print(f"\nRaw results total: {len(all_jobs)}", flush=True)
 
-    # Split keywords into chunks of 4 to stay within search engine query limits
-    chunk_size = 4
-    keyword_chunks = [KEYWORDS[i:i + chunk_size] for i in range(0, len(KEYWORDS), chunk_size)]
+    jobs = condense_jobs(all_jobs)
+    print(f"After in-run dedup: {len(jobs)} unique roles.", flush=True)
 
-    print(f"Scraping jobs in {len(keyword_chunks)} batches...", flush=True)
+    jobs = filter_jobs(jobs, matcher)
 
-    for i, batch in enumerate(keyword_chunks):
-        print(f"  - Batch {i+1}/{len(keyword_chunks)}: {batch}", flush=True)
-
-        # Randomized sleep between batches to avoid Cloudflare/Akamai 403 blocks.
-        # First batch runs immediately; all subsequent batches wait.
-        if i > 0:
-            sleep_time = random.uniform(15, 35)
-            print(f"    ...sleeping {int(sleep_time)}s to avoid WAF detection...", flush=True)
-            time.sleep(sleep_time)
-
-        try:
-            search_query = " OR ".join(batch)
-
-            jobs = scrape_jobs(
-                # FIX: Removed glassdoor and zip_recruiter. Both return hard
-                # WAF/400 blocks on every single batch (confirmed in run logs)
-                # and contribute zero results while adding noise. LinkedIn,
-                # Indeed, and Google Jobs are the three reliable sources.
-                site_name=["linkedin", "indeed", "google"],
-                search_term=search_query,
-                location="United States",
-                results_wanted=50,
-                hours_old=72,  # Full-time roles; wider window than internship scraping
-            )
-
-            if jobs is not None and not jobs.empty:
-                print(f"    ✅ Got {len(jobs)} results.", flush=True)
-                all_jobs.extend(jobs.to_dict("records"))
-            else:
-                print(f"    ⚠️ No results returned for batch {i+1}.", flush=True)
-
-        except Exception as e:
-            print(f"    ❌ Error in batch {i+1}: {e}", flush=True)
-            continue
-
-    print(f"\nRaw results from jobspy: {len(all_jobs)}", flush=True)
-
-    # ── ATS scrapes (Greenhouse + Lever + Ashby) ─────────────────────────────
-    # Lightweight JSON API calls — no sleep needed between them.
-    greenhouse_jobs = scrape_greenhouse()
-    lever_jobs      = scrape_lever()
-    ashby_jobs      = scrape_ashby()
-    all_jobs.extend(greenhouse_jobs)
-    all_jobs.extend(lever_jobs)
-    all_jobs.extend(ashby_jobs)
-
-    print(f"Raw results total (jobspy + ATS): {len(all_jobs)}", flush=True)
-
-    # ── Deduplication: condense same role across multiple cities ──────────────
-    print("🧹 Condensing duplicates...", flush=True)
-    condensed_jobs: dict = {}
-
-    for job in all_jobs:
-        company = str(job.get("company") or "Unknown").strip()
-        title   = str(job.get("title")   or "Unknown").strip()
-
-        # Skip rows with no company name — they will always fail the quality filter
-        # and cause type errors if they slip through.
-        if company in ("Unknown", "None", "", "nan"):
-            continue
-
-        key = (company.lower(), title.lower())
-        loc = str(job.get("location") or "Unknown").strip()
-        if loc in ("None", "nan", ""):
-            loc = "Unknown"
-
-        if key not in condensed_jobs:
-            condensed_jobs[key] = job.copy()
-            condensed_jobs[key]["location"] = loc
-        else:
-            # Same company+role seen in a different city: append the location.
-            existing_locs = condensed_jobs[key].get("location", "")
-            if loc and loc != "Unknown" and loc not in existing_locs:
-                if not existing_locs or existing_locs == "Unknown":
-                    condensed_jobs[key]["location"] = loc
-                else:
-                    condensed_jobs[key]["location"] = f"{existing_locs} | {loc}"
-
-    unique_condensed_list = list(condensed_jobs.values())
-    print(f"After dedup: {len(unique_condensed_list)} unique roles.", flush=True)
-
-    # ── Exclusion + entry-level + company quality filter ─────────────────────
-    # Three gates applied to every role (jobspy + ATS):
-    #   1. Title exclusion — PhD, intern, and seniority terms
-    #   2. Entry-level — years-of-experience parsed from title + description
-    #   3. Company quality — must match the master company list
-    EXCLUDE_TITLE_TERMS = {
-        "phd", "ph.d", "doctorate", "doctoral",
-        "intern", "internship", "co-op", "coop",
-        "senior", "sr.", "sr ", "staff ", "principal ", "lead ", "leader",
-        "manager", "director", "head of", "chief ", "vice president", " vp ",
-        "expert", "fellow", "architect", " ii", " iii", " iv",
-    }
-
-    def _title_excluded(t: str) -> bool:
-        tl = f" {t.lower()} "   # pad so " ii" / " vp " match word boundaries
-        return any(m in tl for m in EXCLUDE_TITLE_TERMS)
-
-    filtered_jobs = []
-    n_title_excluded = 0
-    n_exp_excluded   = 0
-    n_company_miss   = 0
-
-    for j in unique_condensed_list:
-        title = j.get("title", "")
-        desc  = j.get("description", "")
-
-        if not is_high_quality(j.get("company"), master_safe_list):
-            n_company_miss += 1
-            continue
-        if _title_excluded(title):
-            n_title_excluded += 1
-            continue
-        if not _is_entry_level(title, desc):
-            n_exp_excluded += 1
-            continue
-        filtered_jobs.append(j)
-
-    print(
-        f"After all filters: {len(filtered_jobs)} matches. "
-        f"(excluded — title/seniority: {n_title_excluded}, "
-        f"experience: {n_exp_excluded}, company-miss: {n_company_miss})",
-        flush=True,
-    )
-
-    # ── Output: Supabase write + email ────────────────────────────────────────
-    if filtered_jobs:
-        # Write to DB first so the dashboard has data even if email fails
-        write_to_supabase(filtered_jobs)
-        send_email(filtered_jobs)
-        print(f"\n✅ Done. {len(filtered_jobs)} jobs written to Supabase and emailed.", flush=True)
+    client = get_supabase()
+    seen = fetch_seen(client) if client else None
+    if seen is None:
+        print("⚠️ No job history available — digest may include previously sent roles.", flush=True)
     else:
-        print("\n⚠️ No matches found in the master company list today.", flush=True)
-        print("   Check that fortune1000.csv is in the repo root and the scraper returned results.", flush=True)
+        jobs = drop_seen(jobs, seen)
+
+    if not jobs:
+        print("\nℹ️ No new roles this week — no email sent.", flush=True)
+        return
+
+    # Write before emailing so the dashboard has data even if email fails,
+    # and so these roles are recorded as sent for next week's dedup.
+    if client:
+        write_to_supabase(client, jobs)
+    send_email(jobs)
+    print(f"\n✅ Done. {len(jobs)} new jobs processed.", flush=True)
 
 
 if __name__ == "__main__":
