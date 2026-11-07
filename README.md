@@ -11,7 +11,7 @@ Daily job scraper. Every day at 12:00 UTC, a GitHub Action:
 
 ## Restarting an existing setup
 
-1. **Supabase:** open the project in the dashboard and click **Restore** if it is paused. To start the history fresh, run `truncate table pending_jobs;` in the SQL Editor. The next digest will then include every currently matching role.
+1. **Supabase:** open the project in the dashboard and click **Restore** if it is paused. To start the history fresh, run `truncate table pending_jobs cascade;` in the SQL Editor. This also empties the dashboard tables that reference it (`enriched_jobs`, `contacted_history`). The next digest will then include every currently matching role.
 2. **GitHub Actions:** GitHub disables scheduled workflows after 60 days without repo activity. Go to **Actions → Daily Job Scraper** and click **Enable workflow** if a banner says it is disabled.
 3. Push to `main`, then click **Run workflow** to test.
 
