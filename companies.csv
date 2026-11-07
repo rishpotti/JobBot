@@ -1,0 +1,1026 @@
+name,category,priority
+1 Automotive,fortune500,0
+3M,fortune500,0
+A-Mark Precious Metals,fortune500,0
+Abbott Laboratories,fortune500,0
+AbbVie,fortune500,1
+ABM Industries,fortune500,0
+Ace Hardware,fortune500,0
+Adobe,fortune500,1
+Advance Auto Parts,fortune500,0
+Advanced Micro Devices,fortune500,0
+AECOM,fortune500,0
+AES,fortune500,0
+Aflac,fortune500,0
+AGCO,fortune500,0
+Air Products & Chemicals,fortune500,0
+Airbnb,fortune500,1
+Alaska Air,fortune500,0
+Albertsons,fortune500,0
+Alcoa,fortune500,0
+Allstate,fortune500,0
+Ally Financial,fortune500,0
+Alphabet,fortune500,1
+Altice USA,fortune500,0
+Altria,fortune500,0
+Amazon,fortune500,1
+American Airlines,fortune500,0
+American Electric Power,fortune500,0
+American Express,fortune500,1
+American Family Insurance,fortune500,0
+American Financial,fortune500,0
+American International,fortune500,0
+American Tower,fortune500,0
+Ameriprise Financial,fortune500,0
+Amgen,fortune500,1
+Amphenol,fortune500,0
+Analog Devices,fortune500,0
+Andersons,fortune500,0
+APA,fortune500,0
+Apollo Global Management,fortune500,0
+Apple,fortune500,1
+Applied Materials,fortune500,0
+Aramark,fortune500,0
+Archer Daniels Midland,fortune500,0
+ARKO,fortune500,0
+Arrow Electronics,fortune500,0
+Arthur J. Gallagher,fortune500,0
+Asbury Automotive,fortune500,0
+Assurant,fortune500,0
+AT&T,fortune500,0
+Auto-Owners Insurance,fortune500,0
+Autoliv,fortune500,0
+Automatic Data Processing,fortune500,0
+AutoNation,fortune500,0
+AutoZone,fortune500,0
+Avery Dennison,fortune500,0
+Avis Budget,fortune500,0
+Avnet,fortune500,0
+Baker Hughes,fortune500,0
+Ball,fortune500,0
+Bank of America,fortune500,1
+Bank of New York,fortune500,0
+Baxter International,fortune500,0
+Becton Dickinson,fortune500,0
+Berkshire Hathaway,fortune500,0
+Berry Global,fortune500,0
+Best Buy,fortune500,0
+Biogen,fortune500,0
+BJ's Wholesale Club,fortune500,0
+BlackRock,fortune500,1
+Blackstone,fortune500,0
+Block,fortune500,1
+Boeing,fortune500,1
+Booking.com,fortune500,0
+Booz Allen Hamilton,fortune500,0
+BorgWarner,fortune500,0
+Boston Scientific,fortune500,1
+BrightSpring Health Services,fortune500,0
+Bristol-Myers Squibb,fortune500,0
+Broadcom,fortune500,0
+Builders FirstSource,fortune500,0
+Burlington Stores,fortune500,0
+C.H. Robinson Worldwide,fortune500,0
+CACI International,fortune500,0
+Caesars Entertainment,fortune500,0
+Campbell's,fortune500,0
+Capital One,fortune500,1
+Cardinal Health,fortune500,0
+CarMax,fortune500,0
+Carrier Global,fortune500,0
+Carvana,fortune500,0
+Casey's General Stores,fortune500,0
+Caterpillar,fortune500,0
+CBRE,fortune500,0
+CDW,fortune500,0
+Celanese,fortune500,0
+Cencora,fortune500,0
+Centene,fortune500,0
+CenterPoint Energy,fortune500,0
+Charles Schwab,fortune500,0
+Charter Communications,fortune500,0
+Cheniere Energy,fortune500,0
+Chevron,fortune500,0
+Chewy,fortune500,0
+Chipotle Mexican Grill,fortune500,0
+CHS,fortune500,0
+Cigna,fortune500,1
+Cincinnati Financial,fortune500,0
+Cintas,fortune500,0
+Cisco Systems,fortune500,0
+Citi,fortune500,1
+Citizens Financial,fortune500,0
+Cleveland-Cliffs,fortune500,0
+CMS Energy,fortune500,0
+Coca-Cola,fortune500,1
+Cognizant Technology,fortune500,0
+Colgate-Palmolive,fortune500,0
+Comcast,fortune500,0
+Commercial Metals,fortune500,0
+Community Health Systems,fortune500,0
+Conagra Brands,fortune500,0
+Concentrix,fortune500,0
+ConocoPhillips,fortune500,0
+Consolidated Edison,fortune500,0
+Constellation Brands,fortune500,0
+Constellation Energy,fortune500,0
+Core & Main,fortune500,0
+Corebridge Financial,fortune500,0
+Corning,fortune500,0
+Corteva,fortune500,0
+Costco,fortune500,1
+Coupang,fortune500,0
+Crown,fortune500,0
+CSX,fortune500,0
+Cummins,fortune500,0
+CVS Health,fortune500,1
+D.R. Horton,fortune500,0
+Dana,fortune500,0
+Danaher,fortune500,0
+Darden Restaurants,fortune500,0
+DaVita,fortune500,0
+Deere,fortune500,0
+Delek US,fortune500,0
+Dell Technologies,fortune500,0
+Delta Airlines,fortune500,0
+Devon Energy,fortune500,0
+Diamondback Energy,fortune500,0
+Dick's Sporting Goods,fortune500,0
+Discover Financial,fortune500,0
+Dollar General,fortune500,0
+Dollar Tree,fortune500,0
+Dominion Energy,fortune500,0
+DoorDash,fortune500,0
+Dover,fortune500,0
+Dow,fortune500,0
+DTE Energy,fortune500,0
+Duke Energy,fortune500,0
+DuPont,fortune500,0
+DXC Technology,fortune500,0
+Eastman Chemical,fortune500,0
+Ebay,fortune500,0
+EchoStar,fortune500,0
+Ecolab,fortune500,0
+Edison International,fortune500,0
+Edward Jones,fortune500,0
+Electronic Arts,fortune500,0
+Elevance Health,fortune500,0
+Eli Lilly,fortune500,1
+EMCOR,fortune500,0
+Emerson Electric,fortune500,0
+Endeavor,fortune500,0
+Energy Transfer,fortune500,0
+Entergy,fortune500,0
+Enterprise Products Partners,fortune500,0
+EOG Resources,fortune500,0
+Equinix,fortune500,0
+Equitable,fortune500,0
+Erie Insurance,fortune500,0
+Estée Lauder,fortune500,0
+Eversource Energy,fortune500,0
+Exelon,fortune500,0
+Expedia,fortune500,0
+Expeditors International of Washington,fortune500,0
+Exxon Mobil,fortune500,0
+Fannie Mae,fortune500,0
+Farmers Insurance Exchange,fortune500,0
+Fastenal,fortune500,0
+FedEx,fortune500,1
+Ferguson,fortune500,0
+Fidelity National Financial,fortune500,0
+Fidelity National Information,fortune500,0
+Fifth Third Bancorp,fortune500,0
+First Citizens BancShares,fortune500,0
+FirstEnergy,fortune500,0
+Fiserv,fortune500,0
+Fluor,fortune500,0
+FM,fortune500,0
+Foot Locker,fortune500,0
+Ford Motor,fortune500,0
+Fox,fortune500,0
+Franklin Resources,fortune500,0
+Freddie Mac,fortune500,0
+Freeport-McMoRan,fortune500,0
+Gap,fortune500,0
+GE HealthCare Technologies,fortune500,0
+GE Vernova,fortune500,0
+General Dynamics,fortune500,1
+General Electric,fortune500,0
+General Mills,fortune500,0
+General Motors,fortune500,1
+Genuine Parts,fortune500,0
+Gilead Sciences,fortune500,0
+Global Partners,fortune500,0
+Global Payments,fortune500,0
+Goldman Sachs,fortune500,1
+Goodyear Tire & Rubber,fortune500,0
+Graphic Packaging,fortune500,0
+Graybar Electric,fortune500,0
+Guardian Life,fortune500,0
+GuideWell Mutual,fortune500,0
+GXO Logistics,fortune500,0
+Halliburton,fortune500,0
+Hartford Insurance,fortune500,0
+HCA Healthcare,fortune500,0
+Henry Schein,fortune500,0
+Hershey,fortune500,0
+Hertz,fortune500,0
+Hess,fortune500,0
+Hewlett Packard,fortune500,0
+HF Sinclair,fortune500,0
+Hilton,fortune500,0
+Home Depot,fortune500,1
+Honeywell,fortune500,0
+Hormel Foods,fortune500,0
+Howmet Aerospace,fortune500,0
+HP,fortune500,0
+Humana,fortune500,1
+Huntington Bancshares,fortune500,0
+Huntington Ingalls Industries,fortune500,0
+IBM,fortune500,1
+Icahn Enterprises,fortune500,0
+Illinois Tool Works,fortune500,0
+Ingram Micro,fortune500,0
+Ingredion,fortune500,0
+Insight Enterprises,fortune500,0
+Intel,fortune500,1
+Interactive Brokers,fortune500,0
+Intercontinental Exchange,fortune500,0
+International Flavors & Fragrances,fortune500,0
+International Paper,fortune500,0
+Interpublic,fortune500,0
+Intuit,fortune500,1
+Intuitive Surgical,fortune500,0
+IQVIA,fortune500,0
+J.B. Hunt Transport Services,fortune500,0
+J.M. Smucker,fortune500,0
+Jabil,fortune500,0
+Jacobs Solutions,fortune500,0
+Jefferies Financial,fortune500,0
+JetBlue Airways,fortune500,0
+Johnson & Johnson,fortune500,1
+Jones Lang LaSalle,fortune500,0
+JPMorgan Chase,fortune500,0
+KBR,fortune500,0
+Kellanova,fortune500,0
+Kenvue,fortune500,0
+Keurig Dr Pepper,fortune500,0
+KeyCorp,fortune500,0
+Kimberly-Clark,fortune500,0
+Kinder Morgan,fortune500,0
+KKR,fortune500,0
+KLA,fortune500,0
+Kohl's,fortune500,0
+Kraft Heinz,fortune500,0
+Kroger,fortune500,0
+Kyndryl,fortune500,0
+L3Harris Technologies,fortune500,0
+Labcorp,fortune500,0
+Lam Research,fortune500,0
+Land O'Lakes,fortune500,0
+Las Vegas Sands,fortune500,0
+Lear,fortune500,0
+Leidos,fortune500,0
+Lennar,fortune500,0
+Liberty Mutual Insurance,fortune500,0
+Lincoln National,fortune500,0
+Lithia Motors,fortune500,0
+Live Nation Entertainment,fortune500,0
+LKQ,fortune500,0
+Lockheed Martin,fortune500,1
+Loews,fortune500,0
+Lowe's,fortune500,1
+LPL Financial,fortune500,0
+Lululemon athletica,fortune500,0
+Lumen Technologies,fortune500,0
+M&T Bank,fortune500,0
+Macy's,fortune500,0
+Manpower,fortune500,0
+Marathon Petroleum,fortune500,0
+Markel,fortune500,0
+Marriott International,fortune500,0
+Marsh & McLennan,fortune500,0
+Masco,fortune500,0
+Mass Mutual,fortune500,0
+MasTec,fortune500,0
+Mastercard,fortune500,1
+McDonald's,fortune500,0
+McKesson,fortune500,0
+Merck,fortune500,1
+Meta,fortune500,1
+MetLife,fortune500,0
+MGM Resorts International,fortune500,0
+Microchip Technology,fortune500,0
+Micron Technology,fortune500,0
+Microsoft,fortune500,1
+Mohawk Industries,fortune500,0
+Molina Healthcare,fortune500,0
+Molson Coors Beverage,fortune500,0
+Mondelez,fortune500,0
+Monster Beverage,fortune500,0
+Morgan Stanley,fortune500,1
+Mosaic,fortune500,0
+Motorola Solutions,fortune500,0
+Murphy USA,fortune500,0
+Mutual of Omaha Insurance,fortune500,0
+Nationwide,fortune500,0
+Netflix,fortune500,1
+New York Life Insurance,fortune500,0
+Newell Brands,fortune500,0
+Newmont,fortune500,0
+News Corp.,fortune500,0
+NextEra Energy,fortune500,0
+Nike,fortune500,1
+Nordstrom,fortune500,0
+Norfolk Southern,fortune500,0
+Northern Trust,fortune500,0
+Northrop Grumman,fortune500,1
+Northwestern Mutual,fortune500,0
+NOV,fortune500,0
+NRG Energy,fortune500,0
+Nucor,fortune500,0
+Nvidia,fortune500,1
+NVR,fortune500,0
+O'Reilly Automotive,fortune500,0
+Occidental Petroleum,fortune500,0
+Old Republic International,fortune500,0
+Omnicom,fortune500,0
+Oneok,fortune500,0
+Oracle,fortune500,1
+Oscar Health,fortune500,0
+Oshkosh,fortune500,0
+Otis Worldwide,fortune500,0
+Ovintiv,fortune500,0
+Owens & Minor,fortune500,0
+Owens Corning,fortune500,0
+Paccar,fortune500,0
+Pacific Life,fortune500,0
+Packaging Corp. of America,fortune500,0
+Palo Alto Networks,fortune500,0
+Par Pacific,fortune500,0
+Paramount,fortune500,0
+Parker-Hannifin,fortune500,0
+PayPal,fortune500,1
+PBF Energy,fortune500,0
+Penske Automotive,fortune500,0
+PepsiCo,fortune500,1
+Performance Food,fortune500,0
+Peter Kiewit Sons',fortune500,0
+Pfizer,fortune500,1
+PG&E,fortune500,0
+Philip Morris,fortune500,0
+Phillips 66,fortune500,0
+Plains GP,fortune500,0
+PNC,fortune500,0
+Post,fortune500,0
+PPG Industries,fortune500,0
+PPL,fortune500,0
+Principal Financial,fortune500,0
+Procter & Gamble,fortune500,1
+Progressive,fortune500,0
+Prologis,fortune500,0
+Prudential Financial,fortune500,0
+Public Service Enterprise,fortune500,0
+Publix Super Markets,fortune500,0
+Pulte,fortune500,0
+PVH,fortune500,0
+Qualcomm,fortune500,0
+Quanta Services,fortune500,0
+Quest Diagnostics,fortune500,0
+QVC,fortune500,0
+QXO Building Products,fortune500,0
+Raymond James Financial,fortune500,0
+Regeneron Pharmaceuticals,fortune500,0
+Regions Financial,fortune500,0
+Reinsurance of America,fortune500,0
+Reliance,fortune500,0
+Republic Services,fortune500,0
+Rockwell Automation,fortune500,0
+Ross Stores,fortune500,0
+RTX,fortune500,1
+Rush Enterprises,fortune500,0
+Ryder System,fortune500,0
+S&P Global,fortune500,0
+Salesforce,fortune500,1
+Sanmina,fortune500,0
+Science Applications International,fortune500,0
+Seaboard,fortune500,0
+Securian Financial,fortune500,0
+Sempra,fortune500,0
+ServiceNow,fortune500,0
+Sherwin-Williams,fortune500,0
+Sirius XM,fortune500,0
+Skechers U.S.A.,fortune500,0
+Solventum,fortune500,0
+Sonic Automotive,fortune500,0
+Southern,fortune500,0
+Southwest Airlines,fortune500,0
+SpartanNash,fortune500,0
+Sprouts Farmers Market,fortune500,0
+Stanley Black & Decker,fortune500,0
+Starbucks,fortune500,1
+State Farm,fortune500,0
+State Street,fortune500,0
+Steel Dynamics,fortune500,0
+StoneX,fortune500,0
+Stryker,fortune500,0
+Super Micro Computer,fortune500,0
+Synchrony Financial,fortune500,0
+Sysco,fortune500,0
+Targa Resources,fortune500,0
+Target,fortune500,1
+Taylor Morrison Home,fortune500,0
+TD Synnex,fortune500,0
+Tenet Healthcare,fortune500,0
+Tesla,fortune500,1
+Texas Instruments,fortune500,0
+Textron,fortune500,0
+Thermo Fisher Scientific,fortune500,0
+THOR Industries,fortune500,0
+Thrivent Financial for Lutherans,fortune500,0
+TIAA,fortune500,0
+TJX,fortune500,0
+Toll Brothers,fortune500,0
+Tractor Supply,fortune500,0
+TransDigm,fortune500,0
+Travelers,fortune500,0
+Truist Financial,fortune500,0
+Tyson Foods,fortune500,0
+U.S. Bancorp,fortune500,0
+Uber,fortune500,1
+Ulta Beauty,fortune500,0
+Union Pacific,fortune500,0
+United Airlines,fortune500,0
+United Natural Foods,fortune500,0
+United Rentals,fortune500,0
+United States Steel,fortune500,0
+UnitedHealth,fortune500,1
+Universal Health Services,fortune500,0
+Unum,fortune500,0
+UPS,fortune500,1
+US Foods,fortune500,0
+USAA,fortune500,0
+Valero Energy,fortune500,0
+Verizon,fortune500,0
+Vertex Pharmaceuticals,fortune500,0
+Vertiv,fortune500,0
+VF,fortune500,0
+Viatris,fortune500,0
+Visa,fortune500,1
+Vistra,fortune500,0
+Voya Financial,fortune500,0
+Vulcan Materials,fortune500,0
+W.R. Berkley,fortune500,0
+W.W. Grainger,fortune500,0
+Walgreens,fortune500,0
+Walmart,fortune500,1
+Walt Disney,fortune500,0
+Warner Bros. Discovery,fortune500,0
+Waste Management,fortune500,0
+Watsco,fortune500,0
+Wayfair,fortune500,0
+WEC Energy,fortune500,0
+Wells Fargo,fortune500,1
+Welltower,fortune500,0
+WESCO International,fortune500,0
+Western & Southern Financial,fortune500,0
+Western Digital,fortune500,0
+Westinghouse Air Brake Technologies,fortune500,0
+Westlake,fortune500,0
+Whirlpool,fortune500,0
+Williams,fortune500,0
+Williams-Sonoma,fortune500,0
+Workday,fortune500,0
+World Kinect,fortune500,0
+Xcel Energy,fortune500,0
+XPO,fortune500,0
+Xylem,fortune500,0
+Yum Brands,fortune500,0
+Yum China,fortune500,0
+Zimmer Biomet,fortune500,0
+Zoetis,fortune500,0
+Advocate Health,private,0
+Aldi,private,0
+Andersen Corporation,private,0
+Ascension,private,0
+Bain & Company,private,0
+Bass Pro Shops,private,0
+Bechtel,private,0
+Black & Veatch,private,0
+Bloomberg,private,1
+Blue Cross Blue Shield,private,0
+Bose,private,0
+Boston Consulting Group,private,0
+Burns & McDonnell,private,0
+C&S Wholesale Grocers,private,0
+Cargill,private,0
+Chick-fil-A,private,0
+Cleveland Clinic,private,0
+CommonSpirit Health,private,0
+Cox Enterprises,private,0
+Crowe,private,0
+Deloitte,private,1
+Enterprise Mobility,private,0
+Enterprise Products,private,0
+Epic Systems,private,0
+EY,private,1
+Farmers Insurance,private,0
+Fidelity Investments,private,0
+Gensler,private,0
+Giant Eagle,private,0
+Gordon Food Service,private,0
+Grant Thornton,private,0
+Graybar,private,0
+Guidehouse,private,0
+Gulf States Toyota,private,0
+H-E-B,private,0
+Hallmark Cards,private,0
+Hearst,private,0
+Highmark Health,private,0
+Hobby Lobby,private,0
+Hy-Vee,private,0
+Intermountain Health,private,0
+JM Family Enterprises,private,0
+Kaiser Permanente,private,0
+Kiewit,private,0
+Koch Industries,private,0
+Kohler,private,0
+KPMG,private,1
+Liberty Mutual,private,0
+Lidl,private,0
+Love's Travel Stops,private,0
+Mars Incorporated,private,0
+Mass General Brigham,private,0
+MassMutual,private,0
+Mathematica,private,0
+Mayo Clinic,private,0
+McKinsey,private,1
+Medline Industries,private,0
+Meijer,private,0
+Menards,private,0
+New York Life,private,0
+Oliver Wyman,private,0
+Pilot Company,private,0
+Platinum Equity,private,0
+Providence Health,private,0
+PwC,private,1
+QuikTrip,private,0
+RaceTrac,private,0
+Reyes Holdings,private,0
+RSM,private,0
+RTI International,private,0
+S.C. Johnson,private,0
+SAS Institute,private,0
+Sheetz,private,0
+SHI International,private,0
+Southern Glazer's Wine & Spirits,private,0
+Sutter Health,private,0
+Toyota Motor North America,private,0
+Trinity Health,private,0
+Vanguard,private,1
+Wawa,private,0
+Wegmans,private,0
+Westat,private,0
+WinCo Foods,private,0
+World Wide Technology,private,0
+ZS Associates,private,0
+1Password,tech,0
+1X Technologies,tech,0
+Abnormal Security,tech,0
+Accenture,tech,1
+Activision Blizzard,tech,0
+Affirm,tech,0
+Agility Robotics,tech,0
+Airtable,tech,0
+Akamai,tech,0
+Alteryx,tech,0
+AMD,tech,1
+Anduril,tech,1
+Ansys,tech,0
+Anthropic,tech,1
+Anyscale,tech,0
+Anysphere,tech,0
+Applied Intuition,tech,0
+AppLovin,tech,0
+Archer Aviation,tech,0
+Arista Networks,tech,0
+Asana,tech,0
+Atlassian,tech,0
+Aurora Innovation,tech,0
+Autodesk,tech,0
+Axon,tech,0
+Blue Origin,tech,1
+Booking Holdings,tech,0
+Boston Dynamics,tech,0
+Box Inc,tech,0
+Brex,tech,0
+Bungie,tech,0
+ByteDance,tech,0
+C3.ai,tech,0
+CACI,tech,0
+Cadence Design Systems,tech,0
+Canva,tech,0
+Capgemini,tech,0
+Carta,tech,0
+Cerebras,tech,0
+Chainalysis,tech,0
+Character.AI,tech,0
+Chime,tech,1
+Ciena,tech,0
+Circle,tech,0
+Cisco,tech,1
+ClickHouse,tech,0
+Cloudflare,tech,0
+Cognition Labs,tech,0
+Cognizant,tech,0
+Cohere,tech,0
+Coinbase,tech,0
+Compass,tech,0
+Confluent,tech,0
+CoreWeave,tech,0
+CrowdStrike,tech,0
+Cruise,tech,1
+Cursor,tech,0
+Databricks,tech,1
+Datadog,tech,0
+Dataminr,tech,0
+dbt Labs,tech,0
+Decagon,tech,0
+Deel,tech,0
+Digital Realty,tech,0
+Discord,tech,0
+DocuSign,tech,0
+Dropbox,tech,0
+Duolingo,tech,0
+Dynatrace,tech,0
+Elastic,tech,0
+ElevenLabs,tech,0
+EPAM Systems,tech,0
+Epic Games,tech,0
+Etsy,tech,0
+F5,tech,0
+Faire,tech,0
+Fanatics,tech,0
+Figma,tech,0
+Figure AI,tech,0
+Fireworks AI,tech,0
+Fivetran,tech,0
+Flexport,tech,0
+Flock Safety,tech,0
+Fortinet,tech,0
+Garmin,tech,0
+Gartner,tech,0
+GitHub,tech,0
+GitLab,tech,0
+Glean,tech,0
+GlobalFoundries,tech,0
+Gong,tech,0
+Gopuff,tech,0
+Grafana Labs,tech,0
+Grammarly,tech,0
+Groq,tech,0
+Gusto,tech,0
+Harvey AI,tech,0
+Hebbia,tech,0
+Hewlett Packard Enterprise,tech,0
+HubSpot,tech,0
+Hugging Face,tech,0
+Informatica,tech,0
+Infosys,tech,0
+Instacart,tech,0
+Joby Aviation,tech,0
+Juniper Networks,tech,0
+Keysight,tech,0
+Kraken,tech,0
+Lambda,tech,0
+LangChain,tech,0
+LinkedIn,tech,1
+Lucid Motors,tech,0
+Lyft,tech,1
+ManTech,tech,0
+Marqeta,tech,0
+Marvell,tech,0
+Mercury,tech,0
+Micron,tech,0
+Midjourney,tech,0
+Miro,tech,0
+Mistral AI,tech,0
+Modal,tech,0
+Monday.com,tech,0
+MongoDB,tech,0
+Navan,tech,0
+NetApp,tech,0
+Niantic,tech,0
+Notion,tech,0
+Nuro,tech,0
+Nutanix,tech,0
+NXP Semiconductors,tech,0
+Okta,tech,0
+ON Semiconductor,tech,0
+OpenAI,tech,1
+Opendoor,tech,0
+Palantir,tech,1
+Peloton,tech,0
+Peraton,tech,0
+Perplexity,tech,0
+Physical Intelligence,tech,0
+Pika Labs,tech,0
+Pinecone,tech,0
+Pinterest,tech,1
+Plaid,tech,0
+Planet Labs,tech,0
+Postman,tech,0
+Pure Storage,tech,0
+Quora,tech,0
+Ramp,tech,0
+Reddit,tech,0
+Redfin,tech,0
+Relativity Space,tech,0
+Replit,tech,0
+Retool,tech,0
+RingCentral,tech,0
+Riot Games,tech,0
+Ripple,tech,0
+Rippling,tech,0
+Rivian,tech,1
+Robinhood,tech,0
+Roblox,tech,0
+Rocket Lab,tech,0
+Roper Technologies,tech,0
+Runway,tech,0
+Safe Superintelligence,tech,0
+SAIC,tech,0
+SambaNova,tech,0
+Samsara,tech,0
+SAP,tech,0
+Saronic,tech,0
+Scale AI,tech,0
+Seagate,tech,0
+Sentry,tech,0
+Shield AI,tech,0
+Shopify,tech,0
+Sierra Space,tech,0
+Skild AI,tech,0
+Skydio,tech,0
+Slalom,tech,0
+Snap,tech,1
+Snowflake,tech,1
+Snyk,tech,0
+SoFi,tech,1
+SpaceX,tech,1
+Spotify,tech,1
+Stability AI,tech,0
+Starburst,tech,0
+Strava,tech,0
+Stripe,tech,1
+Suno,tech,0
+Synopsys,tech,0
+Take-Two Interactive,tech,0
+Tata Consultancy Services,tech,0
+Tenstorrent,tech,0
+Teradata,tech,0
+Teradyne,tech,0
+The Trade Desk,tech,0
+Thinking Machines Lab,tech,0
+Thoughtworks,tech,0
+TikTok,tech,0
+Toast Inc,tech,0
+Together AI,tech,0
+Trimble,tech,0
+TripAdvisor,tech,0
+Twilio,tech,0
+UiPath,tech,0
+Unity Technologies,tech,0
+Valve,tech,0
+Veeva Systems,tech,0
+Vercel,tech,0
+Verisk,tech,0
+Verkada,tech,0
+VMware,tech,0
+Waymo,tech,1
+Weaviate,tech,0
+Weights & Biases,tech,0
+Wipro,tech,0
+Wiz,tech,0
+xAI,tech,0
+Yelp,tech,0
+Zebra Technologies,tech,0
+Zillow,tech,0
+Zoom,tech,0
+Zoox,tech,1
+Zscaler,tech,0
+Akuna Capital,quant_finance,0
+Apollo Global,quant_finance,0
+AQR Capital Management,quant_finance,0
+Ares Management,quant_finance,0
+Arrowstreet Capital,quant_finance,0
+Balyasny Asset Management,quant_finance,0
+BNY Mellon,quant_finance,0
+Bridgewater Associates,quant_finance,0
+Broadridge,quant_finance,0
+Carlyle Group,quant_finance,0
+Cboe Global Markets,quant_finance,0
+Citadel,quant_finance,1
+Citadel Securities,quant_finance,0
+CME Group,quant_finance,0
+Cubist,quant_finance,0
+D. E. Shaw,quant_finance,0
+DRW,quant_finance,0
+Equifax,quant_finance,0
+Experian,quant_finance,0
+FactSet,quant_finance,0
+FIS,quant_finance,0
+Five Rings,quant_finance,0
+Franklin Templeton,quant_finance,0
+Hudson River Trading,quant_finance,0
+IMC Trading,quant_finance,0
+Invesco,quant_finance,0
+Jack Henry,quant_finance,0
+Jane Street,quant_finance,1
+Jump Trading,quant_finance,0
+LexisNexis,quant_finance,0
+Man Group,quant_finance,0
+Millennium Management,quant_finance,0
+Moody's,quant_finance,0
+Morningstar,quant_finance,0
+MSCI,quant_finance,0
+Nasdaq,quant_finance,0
+Old Mission,quant_finance,0
+Optiver,quant_finance,0
+PDT Partners,quant_finance,0
+Point72,quant_finance,0
+Radix Trading,quant_finance,0
+RELX,quant_finance,0
+Renaissance Technologies,quant_finance,0
+Schonfeld,quant_finance,0
+Squarepoint Capital,quant_finance,0
+Susquehanna International Group,quant_finance,0
+Synchrony,quant_finance,0
+T. Rowe Price,quant_finance,0
+Thomson Reuters,quant_finance,0
+Tower Research Capital,quant_finance,0
+TransUnion,quant_finance,0
+Two Sigma,quant_finance,1
+Two Sigma Investments,quant_finance,0
+Virtu Financial,quant_finance,0
+Voleon,quant_finance,0
+Wellington Management,quant_finance,0
+WorldQuant,quant_finance,0
+XTX Markets,quant_finance,0
+10x Genomics,health_bio,0
+Abridge,health_bio,0
+Align Technology,health_bio,0
+Ambience Healthcare,health_bio,0
+Benchling,health_bio,0
+Bristol Myers Squibb,health_bio,1
+Calico Life Sciences,health_bio,0
+Cityblock Health,health_bio,0
+Datavant,health_bio,0
+Dexcom,health_bio,0
+Exact Sciences,health_bio,0
+Flatiron Health,health_bio,0
+Freenome,health_bio,0
+GE HealthCare,health_bio,1
+Genentech,health_bio,0
+Gilead,health_bio,1
+Grail,health_bio,0
+Guardant Health,health_bio,0
+Headway,health_bio,0
+Hinge Health,health_bio,0
+Hippocratic AI,health_bio,0
+IDEXX Laboratories,health_bio,0
+Illumina,health_bio,0
+Insitro,health_bio,0
+Isomorphic Labs,health_bio,0
+Komodo Health,health_bio,0
+Lyra Health,health_bio,0
+Medtronic,health_bio,1
+Moderna,health_bio,1
+Natera,health_bio,0
+Optum,health_bio,1
+Philips,health_bio,0
+Recursion,health_bio,0
+Regeneron,health_bio,1
+Siemens Healthineers,health_bio,0
+Spring Health,health_bio,0
+Tempus AI,health_bio,0
+Thermo Fisher,health_bio,1
+Veeva,health_bio,0
+Verily,health_bio,0
+Zocdoc,health_bio,0
+ABB,international,0
+Adyen,international,0
+Airbus,international,0
+Arm Holdings,international,0
+ASML,international,0
+AstraZeneca,international,0
+BAE Systems,international,0
+Barclays,international,0
+Bayer,international,0
+BMO,international,0
+BMW,international,1
+BNP Paribas,international,0
+Bosch,international,0
+BP,international,0
+Canon,international,0
+DeepMind,international,1
+Deutsche Bank,international,0
+Ericsson,international,0
+Fujitsu,international,0
+Google DeepMind,international,0
+Grab,international,0
+GSK,international,0
+Hitachi,international,0
+Honda,international,1
+HSBC,international,0
+Hyundai,international,0
+Infineon,international,0
+Klarna,international,0
+L'Oreal,international,0
+LG Electronics,international,0
+Mercedes-Benz,international,0
+Mizuho,international,0
+MUFG,international,0
+NEC,international,0
+Nestle,international,0
+Nissan,international,0
+Nokia,international,0
+Nomura,international,0
+Novartis,international,0
+Novo Nordisk,international,0
+Panasonic,international,0
+RBC,international,0
+Revolut,international,0
+Roche,international,0
+Rolls-Royce,international,0
+Samsung,international,0
+Sanofi,international,0
+Schneider Electric,international,0
+Sea Limited,international,0
+Shell USA,international,0
+Siemens,international,0
+Sony,international,0
+Stellantis,international,0
+STMicroelectronics,international,0
+Takeda,international,0
+TD Bank,international,0
+Thales,international,0
+TotalEnergies,international,0
+Toyota,international,1
+TSMC,international,0
+Uber Eats,international,0
+UBS,international,0
+Unilever,international,0
+Volkswagen,international,0
+Allen Institute,research_lab,0
+Allen Institute for AI,research_lab,0
+Amazon Science,research_lab,0
+Apple Machine Learning Research,research_lab,0
+Argonne National Laboratory,research_lab,0
+Battelle,research_lab,0
+Broad Institute,research_lab,0
+Brookhaven National Laboratory,research_lab,0
+Chan Zuckerberg Initiative,research_lab,0
+Draper Laboratory,research_lab,0
+Fermilab,research_lab,0
+Google Research,research_lab,0
+Howard Hughes Medical Institute,research_lab,0
+IBM Research,research_lab,0
+Idaho National Laboratory,research_lab,0
+Johns Hopkins Applied Physics Laboratory,research_lab,0
+Lawrence Berkeley National Laboratory,research_lab,0
+Lawrence Livermore National Laboratory,research_lab,0
+Los Alamos National Laboratory,research_lab,0
+Meta AI,research_lab,0
+Microsoft Research,research_lab,0
+MIT Lincoln Laboratory,research_lab,0
+MITRE,research_lab,0
+NASA Jet Propulsion Laboratory,research_lab,0
+National Renewable Energy Laboratory,research_lab,0
+NVIDIA Research,research_lab,0
+Oak Ridge National Laboratory,research_lab,0
+Pacific Northwest National Laboratory,research_lab,0
+RAND Corporation,research_lab,0
+Sandia National Laboratories,research_lab,0
+SLAC National Accelerator Laboratory,research_lab,0
+SRI International,research_lab,0
+The Aerospace Corporation,research_lab,0
+AWS,alias,1
+Bain,alias,1
+BCG,alias,1
+Chase,alias,1
+Citigroup,alias,1
+Discover,alias,1
+Elevance,alias,1
+Facebook,alias,1
+Fidelity,alias,1
+Ford,alias,1
+GM,alias,1
+Google,alias,1
+J&J,alias,1
+J.P. Morgan,alias,1
+JPMorgan,alias,1
+L3Harris,alias,1
+P&G,alias,1
+Raytheon,alias,1
+Square,alias,1

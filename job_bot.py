@@ -5,17 +5,18 @@
 # writes the new ones to Supabase, and emails an HTML digest.
 # =============================================================================
 
+import csv
 import html
 import os
 import random
 import re
 import smtplib
 import time
+from collections import Counter
 from datetime import date
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-import pandas as pd
 import requests
 from jobspy import scrape_jobs
 
@@ -80,39 +81,19 @@ KEYWORDS = [
     "AI Scientist",
 ]
 
-PRIORITY_COMPANIES = [
-    # --- TIER 1: BIG TECH & AI ---
-    "Google", "Alphabet", "Apple", "Meta", "Facebook", "Amazon", "AWS",
-    "Microsoft", "Netflix", "Nvidia", "Tesla", "Adobe", "Salesforce",
-    "Oracle", "Intel", "AMD", "Cisco", "IBM", "Intuit", "Uber", "Lyft",
-    "Airbnb", "Spotify", "Snap", "Pinterest", "LinkedIn", "Databricks",
-    "Snowflake", "Palantir", "OpenAI", "Anthropic", "DeepMind",
+# Company allow-list lives in companies.csv (name, category, priority).
+# priority=1 rows are highlighted in gold in the email.
+COMPANIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "companies.csv")
 
-    # --- TIER 2: FINTECH & BANKING ---
-    "American Express", "JPMorgan", "J.P. Morgan", "Chase", "Goldman Sachs",
-    "Morgan Stanley", "Citi", "Citigroup", "Bank of America", "Wells Fargo",
-    "Capital One", "Visa", "Mastercard", "PayPal", "Stripe", "Block", "Square",
-    "BlackRock", "Two Sigma", "Citadel", "Jane Street", "Fidelity", "Vanguard",
-    "Bloomberg", "SoFi", "Chime", "Discover",
+# Size-based fallback for companies not in companies.csv. Indeed reports
+# employer size/revenue labels (e.g. "10,000+", "$1B to $5B (USD)"); a job
+# from an unlisted company passes if either lower bound meets these.
+MIN_EMPLOYEES   = 1000
+MIN_REVENUE_USD = 1_000_000_000
 
-    # --- TIER 3: HEALTHCARE & PHARMA ---
-    "Pfizer", "Moderna", "Johnson & Johnson", "J&J", "Merck", "AbbVie",
-    "Eli Lilly", "UnitedHealth", "Optum", "CVS Health", "Cigna", "Elevance",
-    "Humana", "Bristol Myers Squibb", "Amgen", "Gilead", "Regeneron",
-    "Thermo Fisher", "Medtronic", "Boston Scientific", "GE HealthCare",
-
-    # --- TIER 4: RETAIL, LOGISTICS & CONSULTING ---
-    "Walmart", "Target", "Costco", "Home Depot", "Lowe's", "Nike",
-    "Starbucks", "Procter & Gamble", "P&G", "Coca-Cola", "PepsiCo",
-    "FedEx", "UPS", "Deloitte", "PwC", "EY", "KPMG", "Accenture",
-    "McKinsey", "Bain", "BCG",
-
-    # --- TIER 5: DEFENSE, AUTO & AEROSPACE ---
-    "Boeing", "Lockheed Martin", "Northrop Grumman", "Raytheon", "RTX",
-    "General Dynamics", "L3Harris", "Anduril", "SpaceX", "Blue Origin",
-    "Ford", "General Motors", "GM", "Rivian", "Waymo", "Zoox", "Cruise",
-    "Toyota", "Honda", "BMW",
-]
+# How many of the most frequently dropped (unlisted, small/unknown) companies
+# to print in the run log, to help spot names worth adding to companies.csv.
+LOG_TOP_MISSED_COMPANIES = 20
 
 
 # =============================================================================
@@ -259,28 +240,39 @@ def _normalize_company(name: str) -> str:
     return re.sub(r"\s+", " ", name.lower().replace(".", "").replace(",", "")).strip()
 
 
-PRIORITY_RE = _word_regex([_normalize_company(p) for p in PRIORITY_COMPANIES])
+def load_companies(path: str = COMPANIES_FILE) -> tuple[list, list]:
+    """Returns (all company names, priority company names) from companies.csv."""
+    with open(path, encoding="utf-8", newline="") as f:
+        rows = [r for r in csv.DictReader(f) if (r.get("name") or "").strip()]
+    names    = [r["name"].strip() for r in rows]
+    priority = [r["name"].strip() for r in rows
+                if (r.get("priority") or "").strip().lower() in ("1", "true", "yes")]
+    print(f"✅ Loaded {len(names)} companies ({len(priority)} priority) from companies.csv.", flush=True)
+    return names, priority
+
+
+COMPANY_NAMES, PRIORITY_NAMES = load_companies()
+PRIORITY_RE = _word_regex([_normalize_company(p) for p in PRIORITY_NAMES])
 
 
 def is_priority(company: str) -> bool:
     return bool(PRIORITY_RE.search(_normalize_company(company)))
 
 
-def load_fortune_1000(filename: str = "fortune1000.csv") -> set:
-    """Loads company names from the Fortune 1000 CSV; empty set on failure."""
-    try:
-        try:
-            df = pd.read_csv(filename, encoding="utf-8")
-        except UnicodeDecodeError:
-            df = pd.read_csv(filename, encoding="latin1")
-        df.columns = [c.lower().strip() for c in df.columns]
-        col = "company" if "company" in df.columns else "name"
-        companies = set(df[col].dropna().astype(str))
-        print(f"✅ Loaded {len(companies)} companies from {filename}.", flush=True)
-        return companies
-    except Exception as e:
-        print(f"⚠️ Could not load {filename}: {e} — using PRIORITY_COMPANIES only.", flush=True)
-        return set()
+_MONEY_UNITS = {"K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12}
+
+
+def _is_large_company(job: dict) -> bool:
+    """
+    Fallback for unlisted companies, using Indeed's employer size labels.
+    Compares the lower bound of the range ("1,001 to 5,000" → 1001,
+    "$1B to $5B (USD)" → 1e9) against MIN_EMPLOYEES / MIN_REVENUE_USD.
+    """
+    m = re.search(r"\d[\d,]*", str(job.get("company_num_employees") or ""))
+    if m and int(m.group().replace(",", "")) >= MIN_EMPLOYEES:
+        return True
+    m = re.search(r"(\d+(?:\.\d+)?)\s*([KMBT])", str(job.get("company_revenue") or ""), re.I)
+    return bool(m) and float(m.group(1)) * _MONEY_UNITS[m.group(2).upper()] >= MIN_REVENUE_USD
 
 
 class CompanyMatcher:
@@ -536,6 +528,8 @@ def _is_full_time(job_type) -> bool:
     Checks the source-reported employment type (jobspy "fulltime"/"internship",
     Lever "Full-time"/"Intern", Ashby "FullTime"/"Contract"). Blank → keep.
     """
+    if isinstance(job_type, (list, tuple)):   # jobspy ≥1.4 returns a list of JobType enums
+        job_type = " ".join(str(getattr(x, "value", x)) for x in job_type)
     t = re.sub(r"[^a-z]", "", str(job_type or "").lower())
     if not t or "fulltime" in t:
         return True
@@ -543,13 +537,25 @@ def _is_full_time(job_type) -> bool:
 
 
 def filter_jobs(jobs: list, matcher: CompanyMatcher) -> list:
-    """Company quality → employment type → title exclusion → years-of-experience."""
+    """
+    Company (list match, else Indeed size fallback) → employment type →
+    title exclusion → years-of-experience.
+    """
     kept = []
-    n_company = n_type = n_title = n_exp = 0
+    n_company = n_size = n_type = n_title = n_exp = 0
+    missed = Counter()
     for j in jobs:
-        if not matcher.matches(j["company"]):
+        if matcher.matches(j["company"]):
+            j["_match"] = "list"
+        elif _is_large_company(j):
+            j["_match"] = "size"
+            n_size += 1
+        else:
             n_company += 1
-        elif not _is_full_time(j.get("job_type")):
+            missed[j["company"]] += 1
+            continue
+
+        if not _is_full_time(j.get("job_type")):
             n_type += 1
         elif _title_excluded(j["title"]):
             n_title += 1
@@ -559,9 +565,13 @@ def filter_jobs(jobs: list, matcher: CompanyMatcher) -> list:
             kept.append(j)
     print(
         f"After filters: {len(kept)} matches (excluded — company-miss: {n_company}, "
-        f"not full-time: {n_type}, title: {n_title}, experience: {n_exp}).",
+        f"not full-time: {n_type}, title: {n_title}, experience: {n_exp}; "
+        f"{n_size} unlisted companies passed on Indeed size data).",
         flush=True,
     )
+    if missed:
+        top = ", ".join(f"{c} ({n})" for c, n in missed.most_common(LOG_TOP_MISSED_COMPANIES))
+        print(f"   Most-dropped unlisted companies (add to companies.csv if wanted): {top}", flush=True)
     return kept
 
 
@@ -661,7 +671,8 @@ def write_to_supabase(client, jobs: list) -> None:
 # =============================================================================
 
 def send_email(jobs: list) -> None:
-    """HTML digest; priority companies in gold, Fortune 1000 matches in green."""
+    """HTML digest: priority companies in gold, other listed companies in green,
+    unlisted large companies (Indeed size fallback) in blue."""
     sender_email    = os.environ.get("EMAIL_USER")
     sender_password = os.environ.get("EMAIL_PASS")
     receiver_email  = os.environ.get("EMAIL_RECEIVER", "rishpotti@gmail.com")
@@ -675,8 +686,12 @@ def send_email(jobs: list) -> None:
 
     rows = []
     for job in sorted(jobs, key=lambda x: x["company"].lower()):
-        style = ("background-color: #fff3cd; font-weight: bold;" if is_priority(job["company"])
-                 else "background-color: #e6fffa;")
+        if is_priority(job["company"]):
+            style = "background-color: #fff3cd; font-weight: bold;"
+        elif job.get("_match") == "size":
+            style = "background-color: #e7f1ff;"
+        else:
+            style = "background-color: #e6fffa;"
         link = job["job_url"]
         apply_cell = f'<a href="{html.escape(link, quote=True)}">Apply</a>' if link else "N/A"
         rows.append(
@@ -691,7 +706,8 @@ def send_email(jobs: list) -> None:
     <p>
       <strong>{len(jobs)} new roles</strong> since the last digest.
       <span style="color: #856404; font-weight: bold;">🟡 Gold = Priority company.</span>
-      <span style="color: #0f5132;">🟢 Green = Fortune 1000 match.</span><br>
+      <span style="color: #0f5132;">🟢 Green = company list match.</span>
+      <span style="color: #084298;">🔵 Blue = unlisted large company.</span><br>
       Log into the <strong>Job Hunter Dashboard</strong> to target roles for enrichment.
     </p>
     <table border="1" cellpadding="6" cellspacing="0"
@@ -725,7 +741,7 @@ def send_email(jobs: list) -> None:
 # =============================================================================
 
 def main():
-    matcher = CompanyMatcher(set(PRIORITY_COMPANIES) | load_fortune_1000())
+    matcher = CompanyMatcher(COMPANY_NAMES)
 
     all_jobs = scrape_jobspy()
     for source in ATS_SOURCES:

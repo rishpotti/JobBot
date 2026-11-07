@@ -3,7 +3,7 @@
 Daily job scraper. Every day at 12:00 UTC, a GitHub Action:
 
 1. Scrapes LinkedIn / Indeed / Google Jobs (via jobspy) plus the Greenhouse, Lever and Ashby job boards listed in `job_bot.py`.
-2. Keeps entry-level, US-based AI/ML/data roles at companies in `PRIORITY_COMPANIES` or `fortune1000.csv`.
+2. Keeps entry-level, full-time, US-based AI/ML/data roles at companies listed in `companies.csv`, or at unlisted companies that Indeed reports as 1,000+ employees or $1B+ revenue.
 3. Drops anything already sent in a previous digest (tracked in Supabase).
 4. Saves the new roles to Supabase and emails you an HTML digest.
 
@@ -90,7 +90,9 @@ python job_bot.py
 All settings are at the top of `job_bot.py`:
 
 - `KEYWORDS`: search terms for jobspy.
-- `PRIORITY_COMPANIES`: highlighted in gold in the email; always pass the company filter.
+- `companies.csv`: the company allow-list (`name, category, priority`). Add a row to include a company; set `priority` to `1` to highlight it in gold. Matching is whole-word, so `Walmart` also matches "Walmart Global Tech". For generic one-word names, add a qualifier (e.g. `Box Inc`): the bare name still matches exactly, but the name won't match inside unrelated company names.
+- `MIN_EMPLOYEES` / `MIN_REVENUE_USD`: size thresholds for the Indeed fallback on unlisted companies.
+- Each run logs the unlisted companies dropped most often (`Most-dropped unlisted companies`), which is a quick way to find names worth adding.
 - `GREENHOUSE_COMPANIES` / `LEVER_COMPANIES` / `ASHBY_COMPANIES`: company → job-board slug.
 - `EXCLUDE_TITLE_TERMS`: seniority/intern/PhD words that reject a title.
 - `MAX_YEARS_EXPERIENCE`: roles requiring more years than this are dropped.
