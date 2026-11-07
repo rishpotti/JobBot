@@ -1,6 +1,6 @@
 # =============================================================================
 # job_bot.py  —  Module 1: Scraper Engine
-# Runs weekly via GitHub Actions. Scrapes job boards + ATS APIs, deduplicates,
+# Runs daily via GitHub Actions. Scrapes job boards + ATS APIs, deduplicates,
 # filters by master company list, drops roles already sent in a previous digest,
 # writes the new ones to Supabase, and emails an HTML digest.
 # =============================================================================
@@ -33,9 +33,9 @@ except Exception as e:
 # CONFIGURATION
 # =============================================================================
 
-# How far back jobspy searches. Matches the weekly cron schedule so no
-# postings fall through the gap between runs.
-HOURS_OLD = 7 * 24
+# How far back jobspy searches. Wider than the daily schedule so a failed or
+# skipped run does not lose postings; history dedup removes the overlap.
+HOURS_OLD = 72
 
 KEYWORDS = [
     # --- TIER 1: Core AI / ML Engineering ---
@@ -628,7 +628,7 @@ def write_to_supabase(client, jobs: list) -> None:
         ).execute()
         print(f"✅ Wrote {len(records)} jobs to Supabase.", flush=True)
     except Exception as e:
-        print(f"⚠️ Supabase write failed (these jobs may be re-sent next week): {e}", flush=True)
+        print(f"⚠️ Supabase write failed (these jobs may be re-sent tomorrow): {e}", flush=True)
 
 
 # =============================================================================
@@ -662,7 +662,7 @@ def send_email(jobs: list) -> None:
     html_content = f"""
     <html>
     <body style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
-    <h2>📋 Weekly Job Digest — {today_str}</h2>
+    <h2>📋 Daily Job Digest — {today_str}</h2>
     <p>
       <strong>{len(jobs)} new roles</strong> since the last digest.
       <span style="color: #856404; font-weight: bold;">🟡 Gold = Priority company.</span>
@@ -681,7 +681,7 @@ def send_email(jobs: list) -> None:
     """
 
     msg = MIMEMultipart()
-    msg["Subject"] = f"🚀 Weekly Job Digest ({today_str}): {len(jobs)} New Roles"
+    msg["Subject"] = f"🚀 Daily Job Digest ({today_str}): {len(jobs)} New Roles"
     msg["From"]    = sender_email
     msg["To"]      = receiver_email
     msg.attach(MIMEText(html_content, "html"))
@@ -720,11 +720,11 @@ def main():
         jobs = drop_seen(jobs, seen)
 
     if not jobs:
-        print("\nℹ️ No new roles this week — no email sent.", flush=True)
+        print("\nℹ️ No new roles today — no email sent.", flush=True)
         return
 
     # Write before emailing so the dashboard has data even if email fails,
-    # and so these roles are recorded as sent for next week's dedup.
+    # and so these roles are recorded as sent for the next run's dedup.
     if client:
         write_to_supabase(client, jobs)
     send_email(jobs)

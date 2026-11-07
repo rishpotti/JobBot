@@ -1,9 +1,9 @@
-name: Weekly Job Scraper
+name: Daily Job Scraper
 
 on:
   schedule:
-    # Runs at 12:00 UTC (7:00 AM EST) every Monday
-    - cron: '0 12 * * 1'
+    # Runs at 12:00 UTC (7:00 AM EST) every day
+    - cron: '0 12 * * *'
   workflow_dispatch: # Allows manual trigger for testing
 
 jobs:

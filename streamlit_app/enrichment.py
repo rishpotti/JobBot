@@ -119,7 +119,7 @@ CANDIDATE_PROFILE = {
         {
             "name":        "Automated Job Intelligence & Outreach Bot (this project)",
             "description": "Built an end-to-end agentic pipeline that scrapes job postings "
-                           "weekly from LinkedIn, Indeed, Greenhouse, Lever, and Ashby; filters "
+                           "daily from LinkedIn, Indeed, Greenhouse, Lever, and Ashby; filters "
                            "using LLM-based relevance scoring via the Claude API; and delivers "
                            "a formatted HTML digest. Streamlit dashboard enriches listings with "
                            "Claude-extracted team context, Serper-powered LinkedIn contact "

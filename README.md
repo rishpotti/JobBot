@@ -1,13 +1,21 @@
 # JobBot
 
-Weekly job scraper. Every Monday at 12:00 UTC, a GitHub Action:
+Daily job scraper. Every day at 12:00 UTC, a GitHub Action:
 
 1. Scrapes LinkedIn / Indeed / Google Jobs (via jobspy) plus the Greenhouse, Lever and Ashby job boards listed in `job_bot.py`.
 2. Keeps entry-level, US-based AI/ML/data roles at companies in `PRIORITY_COMPANIES` or `fortune1000.csv`.
 3. Drops anything already sent in a previous digest (tracked in Supabase).
 4. Saves the new roles to Supabase and emails you an HTML digest.
 
-`streamlit_app/` is an optional dashboard and is not needed for the weekly email.
+`streamlit_app/` is an optional dashboard and is not needed for the daily email.
+
+## Restarting an existing setup
+
+1. **Supabase:** open the project in the dashboard and click **Restore** if it is paused. To start the history fresh, run `truncate table pending_jobs;` in the SQL Editor. The next digest will then include every currently matching role.
+2. **GitHub Actions:** GitHub disables scheduled workflows after 60 days without repo activity. Go to **Actions → Daily Job Scraper** and click **Enable workflow** if a banner says it is disabled.
+3. Push to `main`, then click **Run workflow** to test.
+
+If the old Supabase project is gone, follow the full setup below and update the two `SUPABASE_*` secrets.
 
 ## Setup from scratch
 
@@ -66,7 +74,7 @@ In the repo, go to **Settings → Secrets and variables → Actions → New repo
 ### 4. Run it
 
 - Push to `main`. Scheduled workflows only run from the default branch.
-- **Actions → Weekly Job Scraper → Run workflow** triggers a run manually. The first run takes about 5 minutes because of the sleeps between jobspy batches.
+- **Actions → Daily Job Scraper → Run workflow** triggers a run manually. The first run takes about 5 minutes because of the sleeps between jobspy batches.
 - Check the run log for `Loaded N previously seen jobs`, `After history dedup`, and `Email sent`.
 
 ### Run locally (optional)
