@@ -3,7 +3,7 @@
 Daily job scraper. Every day at 12:00 UTC, a GitHub Action:
 
 1. Scrapes LinkedIn / Indeed / Google Jobs (via jobspy) plus the Greenhouse, Lever and Ashby job boards listed in `job_bot.py`.
-2. Keeps entry-level, full-time, US-based AI/ML/data roles at companies listed in `companies.csv`, or at unlisted companies that Indeed reports as 1,000+ employees or $1B+ revenue.
+2. Keeps entry-level, full-time, US-based AI/ML/data and software engineering roles at companies listed in `companies.csv`, or at unlisted companies that Indeed reports as 1,000+ employees or $1B+ revenue.
 3. Drops anything already sent in a previous digest (tracked in Supabase).
 4. Saves the new roles to Supabase and emails you an HTML digest.
 
@@ -94,7 +94,9 @@ All settings are at the top of `job_bot.py`:
 - `MIN_EMPLOYEES` / `MIN_REVENUE_USD`: size thresholds for the Indeed fallback on unlisted companies.
 - Each run logs the unlisted companies dropped most often (`Most-dropped unlisted companies`), which is a quick way to find names worth adding.
 - `GREENHOUSE_COMPANIES` / `LEVER_COMPANIES` / `ASHBY_COMPANIES`: company → job-board slug.
-- `EXCLUDE_TITLE_TERMS`: seniority/intern/PhD words that reject a title.
+- `DOMAIN_PREFIX_KEYWORDS` / `DOMAIN_WORD_KEYWORDS`: a title must contain one of these (AI/ML/data/quant or software engineering).
+- `EXCLUDE_TITLE_TERMS`: seniority/intern/PhD/academic words that reject a title. Level numbers 3+ ("Engineer 4", "Level 5") and III/IV are also rejected; levels I/II/1/2 are kept.
+- `INSTITUTION_RE`: unlisted universities, hospitals and government agencies don't get the Indeed size fallback.
 - `MAX_YEARS_EXPERIENCE`: roles requiring more years than this are dropped.
 - Schedule: the `cron` line in `.github/workflows/daily_scrape.yml`.
 

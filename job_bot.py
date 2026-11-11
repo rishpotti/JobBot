@@ -12,6 +12,7 @@ import random
 import re
 import smtplib
 import time
+import unicodedata
 from collections import Counter
 from datetime import date
 from email.mime.multipart import MIMEMultipart
@@ -142,37 +143,48 @@ ASHBY_COMPANIES = {
 
 # ── Title filtering ──────────────────────────────────────────────────────────
 # All matching is whole-word, so "intern" does not hit "Internal" and "iv"
-# does not hit "Generative".
+# does not hit "Generative". Applied to every source.
 
-# ATS boards return every posting, so they are pre-filtered to the domain.
-# Prefix match (leading word boundary only) so "data engineer" also catches
-# "Data Engineering".
-DOMAIN_KEYWORDS = [
+# A title must contain one of these to be kept (AI/ML/data/quant, plus
+# general software engineering). Prefix match (leading word boundary only)
+# so "data engineer" also catches "Data Engineering".
+DOMAIN_PREFIX_KEYWORDS = [
     "data science", "data scientist",
-    "machine learning", "ml engineer", "ml",
+    "machine learning", "ml engineer", "mlops", "ml ops",
     "applied scientist", "applied machine learning", "applied ml",
     "artificial intelligence", "ai engineer", "ai infrastructure",
     "research scientist", "research engineer", "algorithm engineer",
-    "quantitative", "quant",
+    "quantitative",
     "decision science", "risk model", "financial engineer",
-    "generative ai", "gen ai", "large language model", "llm",
-    "natural language processing", "nlp",
-    "computer vision", "deep learning",
-    "mlops", "ml ops", "data engineer",
+    "generative ai", "large language model",
+    "natural language processing", "computer vision", "deep learning",
+    "data engineer", "model engineer",
     "biomedical", "computational biology", "imaging ai",
+    "perception", "robot learning", "robotics",
+    # General software engineering
+    "software engineer", "software development engineer", "software developer",
+    "backend engineer", "back-end engineer", "full stack", "full-stack",
+    "frontend engineer", "front-end engineer",
+]
+# Short tokens that must match as whole words ("ai" must not hit "aircraft").
+DOMAIN_WORD_KEYWORDS = [
+    "ai", "ml", "mle", "genai", "gen ai", "agentic", "llm", "llms", "nlp",
+    "quant", "sde", "swe",
 ]
 
-# Titles that disqualify a role from any source: PhD-only, non-full-time
+# Titles that disqualify a role from any source: PhD/academic, non-full-time
 # (internships, student programs, contract/part-time), and non-entry-level seniority.
 EXCLUDE_TITLE_TERMS = [
     "phd", "ph.d", "doctorate", "doctoral",
+    "postdoc", "postdoctoral", "post doc", "professor", "faculty", "tenure",
     "intern", "interns", "internship", "co-op", "coop", "summer", "student",
     "apprentice", "apprenticeship", "fellowship", "resident", "residency",
     "part-time", "part time", "contract", "contractor", "temporary", "temp", "seasonal",
-    "senior", "sr", "staff", "principal", "lead", "leader",
+    "nurse",
+    "senior", "sr", "staff", "principal", "lead", "leader", "leadership",
     "manager", "management", "director", "head of", "chief",
-    "president", "vp",
-    "ii", "iii", "iv",
+    "president", "vp", "distinguished",
+    "iii", "iv",                 # level II is allowed (often new-grad for MS hires)
     "expert", "fellow", "architect",
 ]
 
@@ -186,8 +198,12 @@ def _word_regex(terms, suffix_boundary=True) -> re.Pattern:
     return re.compile(rf"(?<!\w)(?:{body})" + (r"(?!\w)" if suffix_boundary else ""), re.IGNORECASE)
 
 
-DOMAIN_RE  = _word_regex(DOMAIN_KEYWORDS, suffix_boundary=False)
-EXCLUDE_RE = _word_regex(EXCLUDE_TITLE_TERMS)
+DOMAIN_PREFIX_RE = _word_regex(DOMAIN_PREFIX_KEYWORDS, suffix_boundary=False)
+DOMAIN_WORD_RE   = _word_regex(DOMAIN_WORD_KEYWORDS)
+EXCLUDE_RE       = _word_regex(EXCLUDE_TITLE_TERMS)
+# Standalone level numbers 3–9 ("ML Engineer 4", "AI Engineer 5", "Level 5").
+# Ignores "3D", "5G", years like "2027", and levels 1–2 (entry levels).
+LEVEL_RE = re.compile(r"(?<![\w.$#/-])[3-9](?![\w.%+/-])")
 
 # ── Entry-level experience filtering ──────────────────────────────────────────
 MAX_YEARS_EXPERIENCE   = 3     # Reject roles requiring more than this many years
@@ -205,31 +221,71 @@ YEARS_PATTERNS = [re.compile(p) for p in (
 AGE_RE = re.compile(r'\d+\s*years?\s*(?:of\s+age|old)')
 
 # ── US location filtering ─────────────────────────────────────────────────────
-# Roles are kept unless the location names a known non-US place. Blank or
-# unrecognized locations are kept (better to over-include; the dashboard lets
-# you reject). Whole-word match so "india" ≠ "Indiana", "uk" ≠ "Milwaukee".
-NON_US_TERMS = [
-    "canada", "toronto", "vancouver", "montreal", "ottawa",
-    "united kingdom", "uk", "england", "london", "manchester", "edinburgh",
-    "ireland", "dublin",
-    "germany", "berlin", "munich", "hamburg",
-    "france", "paris",
-    "netherlands", "amsterdam",
-    "sweden", "stockholm",
-    "india", "bangalore", "bengaluru", "hyderabad", "mumbai", "delhi", "pune",
-    "singapore",
-    "australia", "sydney", "melbourne",
-    "japan", "tokyo",
-    "china", "beijing", "shanghai",
-    "brazil", "são paulo",
-    "mexico", "mexico city",
-    "israel", "tel aviv",
-    "switzerland", "zurich",
-    "spain", "madrid", "barcelona",
-    "poland", "warsaw",
-    "czech", "prague",
+# ATS postings are global. A location string may list several places
+# ("Zürich, CH | San Francisco, CA"), so each segment is classified and the
+# job is kept if ANY segment is US or unrecognized:
+#   1. names a non-US country               → non-US
+#   2. has a US indicator (state, "USA"…)   → US
+#   3. names a known non-US city            → non-US
+#   4. otherwise (e.g. "Remote", "Seattle") → keep
+# Country names that are also common US place names (Georgia, Jersey,
+# Lebanon, Panama, Peru, Jordan, Malta) are deliberately left out.
+NON_US_COUNTRIES = [
+    "afghanistan", "albania", "algeria", "andorra", "angola", "argentina", "armenia",
+    "australia", "austria", "azerbaijan", "bahamas", "bahrain", "bangladesh", "barbados",
+    "belarus", "belgium", "belize", "benin", "bhutan", "bolivia", "bosnia", "botswana",
+    "brazil", "brunei", "bulgaria", "burkina faso", "burundi", "cambodia", "cameroon",
+    "canada", "cape verde", "central african republic", "chile", "china", "colombia",
+    "comoros", "congo", "costa rica", "croatia", "cuba", "cyprus", "czech", "czechia",
+    "denmark", "djibouti", "dominican republic", "ecuador", "egypt", "el salvador",
+    "eritrea", "estonia", "eswatini", "ethiopia", "fiji", "finland", "france", "gabon",
+    "gambia", "germany", "ghana", "greece", "guatemala", "guinea", "guyana", "haiti",
+    "honduras", "hong kong", "hungary", "iceland", "india", "indonesia", "iran", "iraq",
+    "ireland", "israel", "italy", "ivory coast", "jamaica", "japan", "kazakhstan", "kenya",
+    "kosovo", "kuwait", "kyrgyzstan", "laos", "latvia", "lesotho", "liberia", "libya",
+    "liechtenstein", "lithuania", "luxembourg", "macau", "madagascar", "malawi", "malaysia",
+    "maldives", "mali", "mauritania", "mauritius", "mexico", "moldova", "monaco", "mongolia",
+    "montenegro", "morocco", "mozambique", "myanmar", "namibia", "nepal", "netherlands",
+    "new zealand", "nicaragua", "niger", "nigeria", "north korea", "north macedonia",
+    "norway", "oman", "pakistan", "palestine", "papua new guinea", "paraguay",
+    "philippines", "poland", "portugal", "qatar", "romania", "russia", "rwanda",
+    "saudi arabia", "senegal", "serbia", "seychelles", "sierra leone", "singapore",
+    "slovakia", "slovenia", "somalia", "south africa", "south korea", "korea",
+    "south sudan", "spain", "sri lanka", "sudan", "suriname", "sweden", "switzerland",
+    "syria", "taiwan", "tajikistan", "tanzania", "thailand", "togo", "trinidad", "tunisia",
+    "turkey", "turkiye", "turkmenistan", "uganda", "ukraine", "united arab emirates", "uae",
+    "united kingdom", "uk", "england", "scotland", "wales", "uruguay", "uzbekistan",
+    "venezuela", "vietnam", "yemen", "zambia", "zimbabwe",
 ]
-NON_US_RE = _word_regex(NON_US_TERMS)
+NON_US_CITIES = [
+    "toronto", "vancouver", "montreal", "ottawa", "london", "manchester", "edinburgh",
+    "dublin", "berlin", "munich", "hamburg", "paris", "amsterdam", "stockholm",
+    "bangalore", "bengaluru", "hyderabad", "mumbai", "delhi", "pune", "sydney",
+    "melbourne", "tokyo", "beijing", "shanghai", "sao paulo", "mexico city", "tel aviv",
+    "zurich", "madrid", "barcelona", "warsaw", "prague", "taipei", "hsinchu", "seoul",
+    "belgrade", "kuwait city", "dubai", "abu dhabi", "riyadh", "cairo", "lagos", "nairobi",
+]
+US_NAMES = [
+    "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut",
+    "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+    "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan",
+    "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada",
+    "new hampshire", "new jersey", "new mexico", "new york", "north carolina",
+    "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island",
+    "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia",
+    "washington", "west virginia", "wisconsin", "wyoming", "district of columbia",
+    "united states", "usa", "u.s.a", "u.s.",
+]
+# Case-sensitive: ", CA" / " NY" / "Remote, US" (but not "ca" inside words).
+US_STATE_ABBR_RE = re.compile(
+    r"(?:,|\s)\s*(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|"
+    r"MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC|US)"
+    r"(?![A-Za-z])"
+)
+NON_US_COUNTRY_RE = _word_regex(NON_US_COUNTRIES)
+NON_US_CITY_RE    = _word_regex(NON_US_CITIES)
+US_NAME_RE        = _word_regex(US_NAMES)
+LOCATION_SPLIT_RE = re.compile(r"\s*(?:\||;|•|/| or )\s*")
 
 
 # =============================================================================
@@ -237,7 +293,8 @@ NON_US_RE = _word_regex(NON_US_TERMS)
 # =============================================================================
 
 def _normalize_company(name: str) -> str:
-    return re.sub(r"\s+", " ", name.lower().replace(".", "").replace(",", "")).strip()
+    name = re.sub(r"\.com\b", "", name.lower())          # "Amazon.com" → "amazon"
+    return re.sub(r"\s+", " ", name.replace(".", "").replace(",", "")).strip()
 
 
 def load_companies(path: str = COMPANIES_FILE) -> tuple[list, list]:
@@ -289,6 +346,9 @@ class CompanyMatcher:
     def __init__(self, names):
         normalized = {n for n in (_normalize_company(x) for x in names) if n}
         self._contains_re = _word_regex(normalized)
+        # Shortest-first so canonical() picks the parent name ("amazon", not "amazon science").
+        body = "|".join(re.escape(n) for n in sorted(normalized, key=len))
+        self._canonical_re = re.compile(rf"(?<!\w)(?:{body})(?!\w)")
         self._prefixes = set()
         for n in normalized:
             words = n.split()
@@ -302,14 +362,54 @@ class CompanyMatcher:
         norm = _normalize_company(company)
         return bool(norm) and (norm in self._prefixes or bool(self._contains_re.search(norm)))
 
+    def canonical(self, company: str) -> str:
+        """
+        The listed name a company matches, so variants dedup together
+        ("Amazon Science", "Amazon.com", "Amazon Web Services" → "amazon").
+        Unlisted companies → their normalized name.
+        """
+        norm = _normalize_company(company or "")
+        m = self._canonical_re.search(norm)
+        return m.group(0) if m else norm
+
+
+MATCHER = CompanyMatcher(COMPANY_NAMES)
+
+# Unlisted employers of these kinds don't get the Indeed size fallback: they
+# are large but mostly post academic, clinical and government roles.
+INSTITUTION_RE = _word_regex([
+    "university", "college", "school", "hospital", "hospitals", "health system",
+    "medical center", "medical college", "medicine", "health science center",
+    "cancer center", "department of", "county", "city of", "state of", "government",
+    "national institutes", "federal", "administration", "veterans affairs", "centers for",
+])
+
+
+def _title_in_domain(title: str) -> bool:
+    return bool(DOMAIN_PREFIX_RE.search(title) or DOMAIN_WORD_RE.search(title))
+
 
 def _title_excluded(title: str) -> bool:
-    return bool(EXCLUDE_RE.search(title))
+    return bool(EXCLUDE_RE.search(title) or LEVEL_RE.search(title))
+
+
+def _strip_accents(text: str) -> str:
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+
+
+def _segment_is_us_or_unknown(segment: str) -> bool:
+    seg = _strip_accents(segment)
+    if NON_US_COUNTRY_RE.search(re.sub(r"(?i)new mexico", "", seg)):
+        return False
+    if US_STATE_ABBR_RE.search(seg) or US_NAME_RE.search(seg):
+        return True
+    return not NON_US_CITY_RE.search(seg)
 
 
 def _is_us_location(location: str) -> bool:
-    loc = (location or "").lower().replace("new mexico", "")
-    return not NON_US_RE.search(loc)
+    """True if any listed location is in the US or unrecognized (see NON_US_COUNTRIES)."""
+    segments = [seg for seg in LOCATION_SPLIT_RE.split(location or "") if seg.strip()]
+    return not segments or any(_segment_is_us_or_unknown(seg) for seg in segments)
 
 
 def _parse_min_years_required(text: str) -> int | None:
@@ -463,7 +563,7 @@ def scrape_ats(site: str, companies: dict, url_template: str, parse, timeout: in
         for title, loc, url, desc, emp_type in postings:
             title = str(title or "")
             loc = str(loc or "").strip() or "Unknown"
-            if not DOMAIN_RE.search(title) or not _is_us_location(loc):
+            if not _title_in_domain(title) or not _is_us_location(loc):
                 continue
             results.append({
                 "title":       title,
@@ -486,7 +586,8 @@ def scrape_ats(site: str, companies: dict, url_template: str, parse, timeout: in
 # =============================================================================
 
 def _job_key(company: str, title: str) -> tuple:
-    return (company.strip().lower(), title.strip().lower())
+    """Dedup key: canonical company (merges "Amazon"/"Amazon.com"/…) + title."""
+    return (MATCHER.canonical(company), title.strip().lower())
 
 
 def condense_jobs(all_jobs: list) -> list:
@@ -536,18 +637,18 @@ def _is_full_time(job_type) -> bool:
     return not any(x in t for x in NON_FULL_TIME_TYPES)
 
 
-def filter_jobs(jobs: list, matcher: CompanyMatcher) -> list:
+def filter_jobs(jobs: list, matcher: CompanyMatcher = MATCHER) -> list:
     """
     Company (list match, else Indeed size fallback) → employment type →
     title exclusion → years-of-experience.
     """
     kept = []
-    n_company = n_size = n_type = n_title = n_exp = 0
+    n_company = n_size = n_domain = n_type = n_title = n_exp = 0
     missed = Counter()
     for j in jobs:
         if matcher.matches(j["company"]):
             j["_match"] = "list"
-        elif _is_large_company(j):
+        elif _is_large_company(j) and not INSTITUTION_RE.search(j["company"]):
             j["_match"] = "size"
             n_size += 1
         else:
@@ -555,7 +656,9 @@ def filter_jobs(jobs: list, matcher: CompanyMatcher) -> list:
             missed[j["company"]] += 1
             continue
 
-        if not _is_full_time(j.get("job_type")):
+        if not _title_in_domain(j["title"]):
+            n_domain += 1
+        elif not _is_full_time(j.get("job_type")):
             n_type += 1
         elif _title_excluded(j["title"]):
             n_title += 1
@@ -565,7 +668,8 @@ def filter_jobs(jobs: list, matcher: CompanyMatcher) -> list:
             kept.append(j)
     print(
         f"After filters: {len(kept)} matches (excluded — company-miss: {n_company}, "
-        f"not full-time: {n_type}, title: {n_title}, experience: {n_exp}; "
+        f"off-topic title: {n_domain}, not full-time: {n_type}, seniority/title: {n_title}, "
+        f"experience: {n_exp}; "
         f"{n_size} unlisted companies passed on Indeed size data).",
         flush=True,
     )
@@ -741,7 +845,6 @@ def send_email(jobs: list) -> None:
 # =============================================================================
 
 def main():
-    matcher = CompanyMatcher(COMPANY_NAMES)
 
     all_jobs = scrape_jobspy()
     for source in ATS_SOURCES:
@@ -751,7 +854,7 @@ def main():
     jobs = condense_jobs(all_jobs)
     print(f"After in-run dedup: {len(jobs)} unique roles.", flush=True)
 
-    jobs = filter_jobs(jobs, matcher)
+    jobs = filter_jobs(jobs)
 
     client = get_supabase()
     seen = fetch_seen(client) if client else None
